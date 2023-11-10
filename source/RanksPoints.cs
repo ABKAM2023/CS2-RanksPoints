@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Reflection;
 using Newtonsoft.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
@@ -26,6 +27,26 @@ public class PluginConfig
     public int PointsPerMVP { get; set; } = 3;
     public int PointsPerNoScope { get; set; } = 2;
     public int MinPlayersForExperience { get; set; } = 4;
+    public string MinPlayersForExperienceMessage { get; set; } = "";
+    public string MvpAwardMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{LightYellow} {POINTS} [+{MVP_POINTS} за MVP]";
+    public string GetActivePlayerCountMsg { get; set; } = "{White}[ {Red}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игрока для начисления опыта.";
+    public string RoundWinMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{ROUND_WIN_POINTS} за победу в раунде]";
+    public string RoundLossMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{ROUND_LOSS_POINTS} за проигрыш в раунде]";
+    public string SuicideMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{SUICIDE_POINTS} за самоубийство]";
+    public string NoScopeKillMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{NOSCOPE_POINTS} за убийство без прицела]";
+    public string KillMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{KILL_POINTS} за убийство]";
+    public string HeadshotMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Yellow} {POINTS} [+{HEADSHOT_POINTS} за выстрел в голову]";    
+    public string AssistMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{ASSIST_POINTS} за помощь]";
+    public string DeathMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{DEATH_POINTS} за смерть]";   
+    public string NoRankMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] У вас еще нет звания.";
+    public string CurrentRankMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваше текущее звание: {Yellow}{RANK_NAME}{White}.";
+    public string NextRankMessage { get; set; } = "{White}До следующего звания {Yellow}{NEXT_RANK_NAME}{White} вам необходимо {Green}{POINTS_TO_NEXT_RANK} {White}опыта.";
+    public string MaxRankMessage { get; set; } = "{White}Поздравляем, вы достигли {Yellow}{RANK_NAME}{White}!";
+    public string StatsMessage { get; set; } = "{White}Всего опыта: {Green}{POINTS}{White} Позиция: {Yellow}{RANK_POSITION}/{TOTAL_PLAYERS} {White}Убийств: {Green}{KILLS}{White} Смертей: {Red}{DEATHS} {White}K/D Ratio: {Yellow}{KDRATIO}";     
+    public string TopCommandIntroMessage { get; set; } = "{White}[ {Red}Топ игроков {White}]";
+    public string TopPlayerMessage { get; set; } = "{White}{POSITION}. {Grey}{NICKNAME}{White} - {Green}{POINTS} очков";
+    public string RankUpMessage { get; set; } = "Поздравляем! Ваше новое звание: {RANK}.";
+    public string RankDownMessage { get; set; } = "Ваше звание понизилось до: {RANK}.";
 }
 
 public class RankPointsPlugin : BasePlugin
@@ -54,6 +75,12 @@ public class RankPointsPlugin : BasePlugin
 
         SavePlayerPoints();
     }
+    
+    private string EscapeMessage(string message)
+    {
+        return message.Replace("\"", "\\\"").Replace("\n", "\\n");
+    }
+
     public void SaveConfig(PluginConfig config, string filePath)
     {
         var stringBuilder = new StringBuilder();
@@ -82,6 +109,55 @@ public class RankPointsPlugin : BasePlugin
         stringBuilder.AppendLine("# Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.");
         stringBuilder.AppendLine($"MinPlayersForExperience: {config.MinPlayersForExperience}");
 
+        stringBuilder.AppendLine();
+        stringBuilder.AppendLine("# Сообщения событий");            
+        string escapedMvpMessage = config.MvpAwardMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"MvpAwardMessage: \"{escapedMvpMessage}\"");    
+        string escapedRoundWinMessage = config.RoundWinMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"RoundWinMessage: \"{escapedRoundWinMessage}\"");
+        string escapedRoundLossMessage = config.RoundLossMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"RoundLossMessage: \"{escapedRoundLossMessage}\"");
+        string escapedSuicideMessage = config.SuicideMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"SuicideMessage: \"{escapedSuicideMessage}\"");      
+        string escapedNoScopeMessage = config.NoScopeKillMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"NoScopeKillMessage: \"{escapedNoScopeMessage}\"");
+        string escapedKillMessage = config.KillMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"KillMessage: \"{escapedKillMessage}\"");
+        string escapedHeadshotMessage = config.HeadshotMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"HeadshotMessage: \"{escapedHeadshotMessage}\"");      
+        string escapedAssistMessage = config.AssistMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"AssistMessage: \"{escapedAssistMessage}\"");
+        string escapedDeathMessage = config.DeathMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"DeathMessage: \"{escapedDeathMessage}\"");   
+        
+        stringBuilder.AppendLine(); 
+        stringBuilder.AppendLine("# Сообщение, если не хватает необходимого количества игроков.");       
+        string escapedGetActivePlayerCountMsg = config.GetActivePlayerCountMsg.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{escapedGetActivePlayerCountMsg}\"");
+
+        stringBuilder.AppendLine(); 
+        stringBuilder.AppendLine("# Сообщения команды !rank");
+        stringBuilder.AppendLine($"NoRankMessage: \"{EscapeMessage(config.NoRankMessage)}\"");
+        stringBuilder.AppendLine($"CurrentRankMessage: \"{EscapeMessage(config.CurrentRankMessage)}\"");
+        stringBuilder.AppendLine($"NextRankMessage: \"{EscapeMessage(config.NextRankMessage)}\"");
+        stringBuilder.AppendLine($"MaxRankMessage: \"{EscapeMessage(config.MaxRankMessage)}\"");
+        stringBuilder.AppendLine($"StatsMessage: \"{EscapeMessage(config.StatsMessage)}\"");
+
+        stringBuilder.AppendLine(); 
+        stringBuilder.AppendLine("# Сообщения команды !top");
+        string escapedTopCommandIntroMessage = config.TopCommandIntroMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"TopCommandIntroMessage: \"{escapedTopCommandIntroMessage}\"");
+        string escapedTopPlayerMessage = config.TopPlayerMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"TopPlayerMessage: \"{escapedTopPlayerMessage}\"");
+        
+        stringBuilder.AppendLine();      
+        stringBuilder.AppendLine("# Сообщения при повышении или понижении звания");
+        string escapedRankUpMessage = config.RankUpMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"RankUpMessage: \"{escapedRankUpMessage}\"");
+        string escapedRankDownMessage = config.RankDownMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
+        stringBuilder.AppendLine($"RankDownMessage: \"{escapedRankDownMessage}\"");        
+
+
         File.WriteAllText(filePath, stringBuilder.ToString());
     }
     public PluginConfig LoadConfig(string filePath)
@@ -102,30 +178,6 @@ public class RankPointsPlugin : BasePlugin
             return deserializer.Deserialize<PluginConfig>(yaml);
         }
     }
-
-
-
-    public PluginConfig LoadOrCreateConfig(string filePath)
-    {
-        if (!File.Exists(filePath))
-        {
-            var defaultConfig = new PluginConfig();
-
-            var serializer = new SerializerBuilder().Build();
-            var yaml = serializer.Serialize(defaultConfig);
-
-            File.WriteAllText(filePath, "# Конфигурационный файл для RankPointsPlugin\n" + yaml);
-
-            return defaultConfig;
-        }
-        else
-        {
-            var deserializer = new DeserializerBuilder().Build();
-            var yaml = File.ReadAllText(filePath);
-            return deserializer.Deserialize<PluginConfig>(yaml);
-        }
-    }
-
     
 
     public class User
@@ -160,7 +212,6 @@ public class RankPointsPlugin : BasePlugin
         var configFilePath = Path.Combine(ModuleDirectory, "Config.yaml");
 
         _config = LoadOrCreateConfig(configFilePath);
-        SaveConfig(_config, configFilePath);
 
         InitializeRanks();  
         LoadPlayerPoints(); 
@@ -183,9 +234,23 @@ public class RankPointsPlugin : BasePlugin
     public void Unload()
     {
         SavePlayerPoints(); 
-        var configFilePath = Path.Combine(ModuleDirectory, "Config.yaml");
-        SaveConfig(_config, configFilePath);
     }   
+
+    public PluginConfig LoadOrCreateConfig(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            var defaultConfig = new PluginConfig();
+            SaveConfig(defaultConfig, filePath);
+            return defaultConfig;
+        }
+        else
+        {
+            var deserializer = new DeserializerBuilder().Build();
+            var yaml = File.ReadAllText(filePath);
+            return deserializer.Deserialize<PluginConfig>(yaml);
+        }
+    }
 
     private void InitializeRanks()
     {
@@ -276,8 +341,10 @@ public class RankPointsPlugin : BasePlugin
 
         if (!isActiveRoundForPoints)
         {
-            string message = $"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] {ChatColors.Yellow}Необходимо минимум {_config.MinPlayersForExperience} игрока для начисления опыта.";
-            BroadcastToPlayers(message);
+            string formattedMessage = _config.GetActivePlayerCountMsg
+                .Replace("{MIN_PLAYERS}", _config.MinPlayersForExperience.ToString());
+            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+            BroadcastToPlayers(formattedMessage);
         }
 
         return HookResult.Continue;
@@ -448,11 +515,18 @@ public class RankPointsPlugin : BasePlugin
         {
             var steamID = playerController.SteamID.ToString();
             AddPoints(steamID, _config.PointsPerMVP);
-            playerController.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.LightYellow} {playerPoints[steamID]} [+{_config.PointsPerMVP} за MVP]");
+
+            string formattedMessage = _config.MvpAwardMessage
+                .Replace("{POINTS}", playerPoints[steamID].ToString())
+                .Replace("{MVP_POINTS}", _config.PointsPerMVP.ToString());
+            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+
+            playerController.PrintToChat(formattedMessage);
         }
 
         return HookResult.Continue;
     }
+
 
     private HookResult OnRoundEnd(EventRoundEnd roundEndEvent, GameEventInfo info)
     {
@@ -475,12 +549,20 @@ public class RankPointsPlugin : BasePlugin
                 if (playerTeam == winnerTeam)
                 {
                     AddPoints(steamID, _config.PointsPerRoundWin);
-                    playerController.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Green} {playerPoints[steamID]} [+{_config.PointsPerRoundWin} за победу в раунде]");
+                    string formattedMessage = _config.RoundWinMessage
+                        .Replace("{POINTS}", playerPoints[steamID].ToString())
+                        .Replace("{ROUND_WIN_POINTS}", _config.PointsPerRoundWin.ToString());
+                    formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+                    playerController.PrintToChat(formattedMessage);
                 }
                 else
                 {
                     AddPoints(steamID, _config.PointsPerRoundLoss);
-                    playerController.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Red} {playerPoints[steamID]} [{_config.PointsPerRoundLoss} за проигрыш в раунде]");
+                    string formattedMessage = _config.RoundLossMessage
+                        .Replace("{POINTS}", playerPoints[steamID].ToString())
+                        .Replace("{ROUND_LOSS_POINTS}", _config.PointsPerRoundLoss.ToString());
+                    formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+                    playerController.PrintToChat(formattedMessage);
                 }
             }
         }
@@ -509,7 +591,11 @@ public class RankPointsPlugin : BasePlugin
         if (killerSteamID == victimSteamID)
         {
             AddPoints(victimSteamID, _config.PointsPerSuicide);
-            deathEvent.Userid.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}]  Ваш опыт:{ChatColors.Red} {playerPoints[victimSteamID]} [{_config.PointsPerSuicide} за самоубийство]");
+            string formattedMessage = _config.SuicideMessage
+                .Replace("{POINTS}", playerPoints[victimSteamID].ToString())
+                .Replace("{SUICIDE_POINTS}", _config.PointsPerSuicide.ToString());
+            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+            deathEvent.Userid.PrintToChat(formattedMessage);
         }
         else
         {
@@ -519,23 +605,24 @@ public class RankPointsPlugin : BasePlugin
             {
                 int pointsForKill = _config.PointsPerKill;
 
-                if (killerSteamID != null)
+                if (deathEvent.Noscope)
                 {
-                    if (playerPoints.TryGetValue(killerSteamID, out int killerPoints))
-                    {
-                        pointsForKill += _config.PointsPerNoScope;
-                        deathEvent.Attacker.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Blue} {killerPoints} [+{_config.PointsPerNoScope} за убийство без прицела]");
-                    }
-                    else
-                    {
-                        // Обработка случая, когда ключ не найден в словаре.
-                    }
+                    AddPoints(killerSteamID, _config.PointsPerNoScope);
+                    string formattedNoScopeMessage = _config.NoScopeKillMessage
+                        .Replace("{POINTS}", playerPoints[killerSteamID].ToString())
+                        .Replace("{NOSCOPE_POINTS}", _config.PointsPerNoScope.ToString());
+                    formattedNoScopeMessage = ReplaceColorPlaceholders(formattedNoScopeMessage);
+                    deathEvent.Attacker.PrintToChat(formattedNoScopeMessage);
                 }
                 
                 if (killerSteamID != null)
                 {
                     AddPoints(killerSteamID, pointsForKill);
-                    deathEvent.Attacker.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Green} {playerPoints[killerSteamID]} [+{pointsForKill} за убийство]");
+                    string formattedKillMessage = _config.KillMessage
+                        .Replace("{POINTS}", playerPoints[killerSteamID].ToString())
+                        .Replace("{KILL_POINTS}", pointsForKill.ToString());
+                    formattedKillMessage = ReplaceColorPlaceholders(formattedKillMessage);
+                    deathEvent.Attacker.PrintToChat(formattedKillMessage);
                 }
 
                 if (deathEvent.Headshot)
@@ -543,22 +630,33 @@ public class RankPointsPlugin : BasePlugin
                     if (killerSteamID != null)
                     {
                         AddPoints(killerSteamID, _config.PointsPerHeadshot);
-                        deathEvent.Attacker.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Yellow} {playerPoints[killerSteamID]} [+{_config.PointsPerHeadshot} за выстрел в голову]");
+                        string formattedHeadshotMessage = _config.HeadshotMessage
+                            .Replace("{POINTS}", playerPoints[killerSteamID].ToString())
+                            .Replace("{HEADSHOT_POINTS}", _config.PointsPerHeadshot.ToString());
+                        formattedHeadshotMessage = ReplaceColorPlaceholders(formattedHeadshotMessage);
+                        deathEvent.Attacker.PrintToChat(formattedHeadshotMessage);
                     }
                 }
             }
-
             if (deathEvent.Assister != null && deathEvent.Assister.IsValid && !deathEvent.Assister.IsBot)
             {
                 var assisterSteamID = deathEvent.Assister.SteamID.ToString();
                 AddPoints(assisterSteamID, _config.PointsPerAssist);
-                deathEvent.Assister.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Blue} {playerPoints[assisterSteamID]} [+{_config.PointsPerAssist} за помощь]");
+                string formattedAssistMessage = _config.AssistMessage
+                    .Replace("{POINTS}", playerPoints[assisterSteamID].ToString())
+                    .Replace("{ASSIST_POINTS}", _config.PointsPerAssist.ToString());
+                formattedAssistMessage = ReplaceColorPlaceholders(formattedAssistMessage);
+                deathEvent.Assister.PrintToChat(formattedAssistMessage);
             }
 
             if (victimSteamID != null && playerPoints.ContainsKey(victimSteamID))
             {
                 AddPoints(victimSteamID, _config.PointsPerDeath);
-                deathEvent.Userid.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваш опыт:{ChatColors.Red} {playerPoints[victimSteamID]} [{_config.PointsPerDeath} за смерть]");
+                string formattedDeathMessage = _config.DeathMessage
+                    .Replace("{POINTS}", playerPoints[victimSteamID].ToString())
+                    .Replace("{DEATH_POINTS}", _config.PointsPerDeath.ToString());
+                formattedDeathMessage = ReplaceColorPlaceholders(formattedDeathMessage);
+                deathEvent.Userid.PrintToChat(formattedDeathMessage);
             }
         }
 
@@ -638,20 +736,16 @@ public class RankPointsPlugin : BasePlugin
                 // Обработка случая, когда newRank равно null.
             }
             
-            var playerController = FindPlayerBySteamID(steamID);
-            if (playerController != null)
+            if (currentRank != newRank)
             {
-                string message;
-                if (rankUp)
+                string messageTemplate = rankUp ? _config.RankUpMessage : _config.RankDownMessage;
+                string message = messageTemplate.Replace("{RANK}", newRank);
+
+                var rankUpdatePlayerController = FindPlayerBySteamID(steamID);
+                if (rankUpdatePlayerController != null)
                 {
-                    message = $"Поздравляем! Ваше новое звание: {newRank}.";
+                    rankUpdatePlayerController.PrintToCenter(message);
                 }
-                else
-                {
-                    message = $"Ваше звание понизилось до: {newRank}.";
-                }
-                
-                playerController.PrintToCenter(message);
             }
             else
             {
@@ -709,16 +803,6 @@ public class RankPointsPlugin : BasePlugin
             Console.WriteLine($"[RankPointsPlugin] Не удалось сохранить очки игроков: {ex.Message}");
         }
     }
-    private string ConvertSteamID64ToSteamID(ulong steamID64)
-    {
-        const ulong SteamID64Identifier = 76561197960265728;
-        const ulong universe = 1; 
-
-        ulong accountIdLowBit = steamID64 & 1;
-        ulong accountIdHighBits = (steamID64 - SteamID64Identifier - accountIdLowBit) / 2;
-
-        return $"STEAM_{universe}:{accountIdLowBit}:{accountIdHighBits}";
-    }
 
     private (string NextRankName, int PointsToNextRank) GetNextRankInfo(int currentPoints)
     {
@@ -753,15 +837,12 @@ public class RankPointsPlugin : BasePlugin
     [ConsoleCommand("rank", "Показывает ваше текущее звание и информацию о следующем")]
     public void OnRankCommand(CCSPlayerController? player, CommandInfo command)
     {
-        if (player == null)
-        {
-            return;
-        }
+        if (player == null) return;
 
         var steamID = player.SteamID.ToString();
         if (!playerPoints.TryGetValue(steamID, out var points))
         {
-            player.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] У вас еще нет звания.");
+            player.PrintToChat(ReplaceColorPlaceholders(_config.NoRankMessage));
             return;
         }
 
@@ -771,24 +852,28 @@ public class RankPointsPlugin : BasePlugin
         var kills = playerKills.TryGetValue(steamID, out var playerKillsCount) ? playerKillsCount : 0;
         var deaths = playerDeaths.TryGetValue(steamID, out var playerDeathsCount) ? playerDeathsCount : 0;    
         var kdRatio = CalculateKDRatio(kills, deaths);    
+        var (nextRankName, pointsToNextRank) = GetNextRankInfo(points);
  
         string formattedKDRatio = kdRatio.ToString("0.00");
 
         var rankName = playerRanks.TryGetValue(steamID, out var rank) ? rank : "Нету";
 
-        player.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Ранг {ChatColors.White}] Ваше текущее звание: {ChatColors.Yellow}{rankName}{ChatColors.White}.");
-
-        var (nextRankName, pointsToNextRank) = GetNextRankInfo(points);
+        string currentRankMessage = ReplaceColorPlaceholders(_config.CurrentRankMessage.Replace("{RANK_NAME}", rankName));
+        player.PrintToChat(currentRankMessage);
 
         if (pointsToNextRank > 0)
         {
-            player.PrintToChat($"{ChatColors.White}До следующего звания {ChatColors.Yellow}{nextRankName}{ChatColors.White} вам необходимо {ChatColors.Green}{pointsToNextRank} {ChatColors.White}опыта.");
+            string nextRankMessage = ReplaceColorPlaceholders(_config.NextRankMessage.Replace("{NEXT_RANK_NAME}", nextRankName).Replace("{POINTS_TO_NEXT_RANK}", pointsToNextRank.ToString()));
+            player.PrintToChat(nextRankMessage);
         }
         else
         {
-            player.PrintToChat($"{ChatColors.White}Поздравляем, вы достигли {ChatColors.Yellow}{nextRankName}{ChatColors.White}!");
+            string maxRankMessage = ReplaceColorPlaceholders(_config.MaxRankMessage.Replace("{RANK_NAME}", nextRankName));
+            player.PrintToChat(maxRankMessage);
         }
-        player.PrintToChat($"{ChatColors.White}Всего опыта: {ChatColors.Green}{points}{ChatColors.White} Позиция: {ChatColors.Yellow}{rankPosition}/{totalPlayers} {ChatColors.White}Убийств: {ChatColors.Green}{kills}{ChatColors.White} Смертей: {ChatColors.Red}{deaths} {ChatColors.White}K/D Ratio: {ChatColors.Yellow}{formattedKDRatio}");
+
+        string statsMessage = ReplaceColorPlaceholders(_config.StatsMessage.Replace("{POINTS}", points.ToString()).Replace("{RANK_POSITION}", rankPosition.ToString()).Replace("{TOTAL_PLAYERS}", totalPlayers.ToString()).Replace("{KILLS}", kills.ToString()).Replace("{DEATHS}", deaths.ToString()).Replace("{KDRATIO}", formattedKDRatio));
+        player.PrintToChat(statsMessage);
     }
 
    
@@ -817,11 +902,17 @@ public class RankPointsPlugin : BasePlugin
 
         SaveTopPlayers();
 
-        player.PrintToChat($"{ChatColors.White}[ {ChatColors.Grey}Топ игроков {ChatColors.White}]");
+        string introMessage = ReplaceColorPlaceholders(_config.TopCommandIntroMessage);
+        player.PrintToChat(introMessage);
+
         for (int i = 0; i < topPlayers.Count; i++)
         {
             var topPlayerInfo = topPlayersList[i];
-            player.PrintToChat($"{ChatColors.White}{i + 1}. {ChatColors.Yellow}{topPlayerInfo.Nickname}{ChatColors.White} - {ChatColors.Green}{topPlayerInfo.Points} очков");
+            string playerMessage = ReplaceColorPlaceholders(
+                _config.TopPlayerMessage.Replace("{POSITION}", (i + 1).ToString())
+                                        .Replace("{NICKNAME}", topPlayerInfo.Nickname)
+                                        .Replace("{POINTS}", topPlayerInfo.Points.ToString()));
+            player.PrintToChat(playerMessage);
         }
     }
     private void SaveTopPlayers()
@@ -874,6 +965,23 @@ public class RankPointsPlugin : BasePlugin
         return "Игрок не найден";
     }
 
+    private string ReplaceColorPlaceholders(string message)
+    {
+        if (message.Contains('{'))
+        {
+            string modifiedValue = message;
+            foreach (FieldInfo field in typeof(ChatColors).GetFields())
+            {
+                string pattern = $"{{{field.Name}}}";
+                if (message.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null).ToString(), StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            return modifiedValue;
+        }
 
+        return message;
+    }
 
 }
