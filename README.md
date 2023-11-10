@@ -13,6 +13,7 @@ RanksPoints система базируется на простом принци
 
 # Основной конфиг
 ```
+# Конфигурационный файл для RankPoints
 # Очки за убийство - количество очков, добавляемое игроку за убийство противника.
 PointsPerKill: 5
 # Очки отнимаемые за смерть - количество очков, вычитаемое у игрока за смерть.
@@ -34,6 +35,35 @@ PointsPerNoScope: 2
 
 # Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.
 MinPlayersForExperience: 4
+
+# Сообщения событий
+MvpAwardMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{LightYellow} {POINTS} [+{MVP_POINTS} за MVP]"
+RoundWinMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{ROUND_WIN_POINTS} за победу в раунде]"
+RoundLossMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{ROUND_LOSS_POINTS} за проигрыш в раунде]"
+SuicideMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{SUICIDE_POINTS} за самоубийство]"
+NoScopeKillMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{NOSCOPE_POINTS} за убийство без прицела]"
+KillMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{KILL_POINTS} за убийство]"
+HeadshotMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Yellow} {POINTS} [+{HEADSHOT_POINTS} за выстрел в голову]"
+AssistMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{ASSIST_POINTS} за помощь]"
+DeathMessage: "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{DEATH_POINTS} за смерть]"
+
+# Сообщение, если не хватает необходимого количества игроков.
+GetActivePlayerCountMsg: "{White}[ {Red}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игрока для начисления опыта."
+
+# Сообщения команды !rank
+NoRankMessage: "{White}[ {Red}RanksPoints {White}] У вас еще нет звания."
+CurrentRankMessage: "{White}[ {Red}RanksPoints {White}] Ваше текущее звание: {Yellow}{RANK_NAME}{White}."
+NextRankMessage: "{White}До следующего звания {Yellow}{NEXT_RANK_NAME}{White} вам необходимо {Green}{POINTS_TO_NEXT_RANK} {White}опыта."
+MaxRankMessage: "{White}Поздравляем, вы достигли {Yellow}{RANK_NAME}{White}!"
+StatsMessage: "{White}Всего опыта: {Green}{POINTS}{White} Позиция: {Yellow}{RANK_POSITION}/{TOTAL_PLAYERS} {White}Убийств: {Green}{KILLS}{White} Смертей: {Red}{DEATHS} {White}K/D Ratio: {Yellow}{KDRATIO}"
+
+# Сообщения команды !top
+TopCommandIntroMessage: "{White}[ {Red}Топ игроков {White}]"
+TopPlayerMessage: "{White}{POSITION}. {Grey}{NICKNAME}{White} - {Green}{POINTS} очков"
+
+# Сообщения при повышении звания
+RankUpMessage: "Поздравляем! Ваше новое звание: {RANK}."
+RankDownMessage: "Ваше звание понизилось до: {RANK}."
 ```
 
 # Конфиг настройки званий
