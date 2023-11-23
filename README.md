@@ -1,4 +1,4 @@
-#EN
+# EN
 Apologies for my poor English.
 
 The current version may not be completely stable as this is my first plugin, and it's quite possible that I missed some important details during the development process.
