@@ -141,7 +141,7 @@ RankDownMessage: "Your rank has been decreased to: {RANK}."
 - Fix all compilation warnings.
 - This list will be further expanded.
 
-#RU
+# RU
 Текущая версия может быть не полностью стабильной, поскольку это мой первый плагин, и вполне возможно, что в ходе разработки я упустил некоторые важные детали
 
 # RanksPoints
