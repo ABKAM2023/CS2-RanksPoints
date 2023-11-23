@@ -132,8 +132,8 @@ RankDownMessage: "Your rank has been decreased to: {RANK}."
 - `!topkdr` displays a list of the top ten players by KDR.
 
 # Console Commands
-- `!rp_reloadconfig` reloads the Config.yml configuration file.
-- `!rp_reloadranks` reloads the settings_ranks.yaml configuration file.
+- `rp_reloadconfig` reloads the Config.yml configuration file.
+- `rp_reloadranks` reloads the settings_ranks.yaml configuration file.
 
 # Planned
 - Implement MySQL database support.
@@ -273,8 +273,8 @@ RankDownMessage: "Ваше звание понизилось до: {RANK}."
 - `!topkdr` выводит список десяти лучших игроков по KDR.
 
 # Команды для консоли
-- `!rp_reloadconfig` перезагружает конфигурационный файл Config.yml
-- `!rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
+- `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
+- `rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
 
 # Планируется
 - Реализовать поддержку базы данных MySQL.
