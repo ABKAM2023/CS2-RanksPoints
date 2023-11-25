@@ -1,3 +1,9 @@
+![GitHub Repo stars](https://img.shields.io/github/stars/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub all releases](https://img.shields.io/github/downloads/ABKAM2023/CS2-RanksPoints/total?style=for-the-badge)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/ABKAM2023/CS2-RanksPoints/dev?style=for-the-badge)
+
 # EN
 Apologies for my poor English.
 
