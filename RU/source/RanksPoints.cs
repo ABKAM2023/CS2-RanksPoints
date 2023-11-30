@@ -842,7 +842,7 @@ namespace RanksPointsNamespace
 
                 if (rankId == 0)
                 {
-                    return new RankConfig { Id = 1, Name = "Нету", MinExperience = 0 };
+                    return new RankConfig { Id = 1, Name = "Серебро - I", MinExperience = 0 };
                 }
 
                 var ranksConfig = LoadRanksConfig();
