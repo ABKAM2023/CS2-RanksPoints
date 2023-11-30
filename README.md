@@ -1,12 +1,12 @@
 I'm sorry for my poor English.
 
-#EN
+# EN
 The plugin was developed inspired by the [Levels Ranks] plugins and borrows most of its functions as well as the database. This means that the RanksPoints plugin can be integrated with LrWeb or GameCMS similar to [Levels Ranks]. During development, there was no opportunity to fully test the plugin, so there may be errors in its operation. If you find any issues, please report them for correction.
 
-#RanksPoints
+# RanksPoints
 The RanksPoints system is based on a simple principle: players perform various actions in the game, as a result of which they either gain or lose experience points. Achieving or losing a certain amount of these points leads to obtaining a corresponding rank. The number of available ranks can be configured and edited as desired.
 
-#Installation
+# Installation
 1. Install [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master) and [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp)
 
 2. Download RankPoints.
