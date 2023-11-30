@@ -225,7 +225,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
 - `!topdeaths` displays a list of the top ten players by deaths.
 - `!topkdr` displays a list of the top ten players by KDR.
 - `!toptime` shows the top ten players by time on the server.
-- `!resetstats` Resets your statistics (can be used once every 3 hours).
+- `!resetstats` resets your statistics (can be used once every 3 hours).
 - `!ranks` shows a list of all ranks and the experience required to achieve them.
 - `!lvl` shows a list of all available commands and their functions.
 
@@ -468,7 +468,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Показывает спис
 # Команды для консоли
 - `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
 - `rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
-- `rp_resetranks` Очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
+- `rp_resetranks` очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
 
 # Планируется
 - Расширить список событий, за которые начисляется опыт.
