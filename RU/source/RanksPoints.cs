@@ -3,1285 +3,1523 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Reflection;
-using Newtonsoft.Json;
+using System.Text.RegularExpressions;
+using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using System.Reflection;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using MySqlConnector;
+using Dapper;
 
-namespace RankPointsPlugin;
-
-public class PluginConfig
-{
-    public int PointsPerKill { get; set; } = 5; 
-    public int PointsPerDeath { get; set; } = -5; 
-    public int PointsPerAssist { get; set; } = 1;
-    public int PointsPerSuicide { get; set; } = -6;
-    public int PointsPerHeadshot { get; set; } = 1;
-    public int PointsPerRoundWin { get; set; } = 2;
-    public int PointsPerRoundLoss { get; set; } = -2;
-    public int PointsPerMVP { get; set; } = 3;
-    public int PointsPerNoScope { get; set; } = 2;
-    public int MinPlayersForExperience { get; set; } = 4;
-    public bool AwardPointsForBots { get; set; } = false; 
-    public string MinPlayersForExperienceMessage { get; set; } = "";
-    public string MvpAwardMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{LightYellow} {POINTS} [+{MVP_POINTS} за MVP]";
-    public string GetActivePlayerCountMsg { get; set; } = "{White}[ {Red}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игрока для начисления опыта.";
-    public string RoundWinMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{ROUND_WIN_POINTS} за победу в раунде]";
-    public string RoundLossMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{ROUND_LOSS_POINTS} за проигрыш в раунде]";
-    public string SuicideMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{SUICIDE_POINTS} за самоубийство]";
-    public string NoScopeKillMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{NOSCOPE_POINTS} за убийство без прицела]";
-    public string KillMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Green} {POINTS} [+{KILL_POINTS} за убийство]";
-    public string HeadshotMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Yellow} {POINTS} [+{HEADSHOT_POINTS} за выстрел в голову]";    
-    public string AssistMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Blue} {POINTS} [+{ASSIST_POINTS} за помощь]";
-    public string DeathMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваш опыт:{Red} {POINTS} [{DEATH_POINTS} за смерть]";   
-    public string NoRankMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] У вас еще нет звания.";
-    public string CurrentRankMessage { get; set; } = "{White}[ {Red}RanksPoints {White}] Ваше текущее звание: {Yellow}{RANK_NAME}{White}.";
-    public string NextRankMessage { get; set; } = "{White}До следующего звания {Yellow}{NEXT_RANK_NAME}{White} вам необходимо {Green}{POINTS_TO_NEXT_RANK} {White}опыта.";
-    public string MaxRankMessage { get; set; } = "{White}Поздравляем, вы достигли {Yellow}{RANK_NAME}{White}!";
-    public string StatsMessage { get; set; } = "{White}Всего опыта: {Green}{POINTS}{White} Позиция: {Yellow}{RANK_POSITION}/{TOTAL_PLAYERS} {White}Убийств: {Green}{KILLS}{White} Смертей: {Red}{DEATHS} {White}K/D Ratio: {Yellow}{KDRATIO}";     
-    public string TopCommandIntroMessage { get; set; } = "{White}[ {Red}Топ игроков {White}]";
-    public string TopPlayerMessage { get; set; } = "{White}{POSITION}. {Grey}{NICKNAME}{White} - {Green}{POINTS} очков";
-    public string TopKillsIntroMessage { get; set; } = "{White}[ {Red}Топ по убийствам {White}]";
-    public string TopKillsPlayerMessage { get; set; } = "{White}{POSITION}. {Grey}{NICKNAME}{White} - {Green}{KILLS} убийств";    
-    public string TopDeathsIntroMessage { get; set; } = "{White}[ {Red}Топ по смертям {White}]";
-    public string TopDeathsPlayerMessage { get; set; } = "{POSITION}. {Grey}{NICKNAME}{White} - {Green}{DEATHS} смертей";
-    public string TopKdrIntroMessage { get; set; } = "{White}[ {Red}Топ KDR {White}]";
-    public string TopKdrPlayerMessage { get; set; } = "{White}{POSITION}. {Grey}{NICKNAME}{White} - KDR: {Yellow}{KDR}";    
-    public string RankUpMessage { get; set; } = "Поздравляем! Ваше новое звание: {RANK}.";
-    public string RankDownMessage { get; set; } = "Ваше звание понизилось до: {RANK}.";
-}
-public class RankPointsPlugin : BasePlugin
+namespace RanksPointsNamespace
 {    
-    private Dictionary<string, int> playerKills;
-    private Dictionary<string, int> playerDeaths;
-    private Dictionary<string, bool> playerReachedMaxRank = new Dictionary<string, bool>();
-    private string? topPlayersFilePath;
-    private List<TopPlayer>? topPlayersList;  
-    private Dictionary<string, int> playerPoints;
-    private Dictionary<string, string> playerRanks;
-    private string? dataFilePath;
-    private static PluginConfig _config = new PluginConfig();
-    private string? ranksFilePath;
-    private string? topKillsFilePath;
-    private string? topDeathsFilePath;
-    private List<Rank> ranks;
-    private List<TopPlayer> topKillersList = new List<TopPlayer>();
-    private List<TopPlayer> topDeathsList = new List<TopPlayer>();
-    private List<TopPlayerKDR> topKDRList = new List<TopPlayerKDR>();
-    private bool isActiveRoundForPoints;
-    public override string ModuleName => "Rank Points (by ABKAM)";
-    public override string ModuleVersion => "1.0.1";
-    public class User
+    public class RanksPoints : BasePlugin
     {
-        public string? SteamId { get; set; }
-        public int Experience { get; set; }
-        public int Score { get; set; }
-        public int Kills { get; set; }
-        public int Deaths { get; set; }
-        public int Assists { get; set; }
-        public int Damage { get; set; }
-        public int Mvp { get; set; }
-        public int HeadshotKills { get; set; }
-        public double PercentageHeadshot { get; set; }
-        public float Kdr { get; set; }
-    }
-    private class TopPlayerKDR {
-        public string? SteamID { get; set; }
-        public string? Nickname { get; set; }
-        public double KDR { get; set; }
-    }
-    private class TopPlayer
-    {
-        public string? SteamID { get; set; }
-        public string? Nickname { get; set; }
-        public int Points { get; set; }
-    }  
-
-    public RankPointsPlugin()
-    {
-        playerPoints = new Dictionary<string, int>();
-        playerRanks = new Dictionary<string, string>();
-        ranks = new List<Rank>();
-        playerKills = new Dictionary<string, int>();
-        playerDeaths = new Dictionary<string, int>();
-
-        SavePlayerPoints();
-    }
-    
-    private string EscapeMessage(string message)
-    {
-        return message.Replace("\"", "\\\"").Replace("\n", "\\n");
-    }
-
-    public void SaveConfig(PluginConfig config, string filePath)
-    {
-        var stringBuilder = new StringBuilder();
-
-        stringBuilder.AppendLine("# Конфигурационный файл для RankPoints");
-        stringBuilder.AppendLine("# Очки за убийство - количество очков, добавляемое игроку за убийство противника.");
-        stringBuilder.AppendLine($"PointsPerKill: {config.PointsPerKill}");
-        stringBuilder.AppendLine("# Очки отнимаемые за смерть - количество очков, вычитаемое у игрока за смерть.");
-        stringBuilder.AppendLine($"PointsPerDeath: {config.PointsPerDeath}");
-        stringBuilder.AppendLine("# Очки за помощь - количество очков, добавляемое игроку за помощь в убийстве.");
-        stringBuilder.AppendLine($"PointsPerAssist: {config.PointsPerAssist}");
-        stringBuilder.AppendLine("# Очки за самоубийство - количество очков, вычитаемое у игрока за самоубийство.");
-        stringBuilder.AppendLine($"PointsPerSuicide: {config.PointsPerSuicide}");
-        stringBuilder.AppendLine("# Очки за выстрел в голову - дополнительные очки за убийство с выстрелом в голову.");
-        stringBuilder.AppendLine($"PointsPerHeadshot: {config.PointsPerHeadshot}");
-        stringBuilder.AppendLine("# Очки за победу в раунде - количество очков, добавляемое игроку за победу его команды в раунде.");
-        stringBuilder.AppendLine($"PointsPerRoundWin: {config.PointsPerRoundWin}");
-        stringBuilder.AppendLine("# Очки за проигрыш в раунде - количество очков, вычитаемое у игрока за проигрыш его команды в раунде.");
-        stringBuilder.AppendLine($"PointsPerRoundLoss: {config.PointsPerRoundLoss}");
-        stringBuilder.AppendLine("# Очки за MVP - количество очков, добавляемое игроку за получение звания MVP раунда.");
-        stringBuilder.AppendLine($"PointsPerMVP: {config.PointsPerMVP}");
-        stringBuilder.AppendLine("# Очки за убийство без прицела (no-scope) - дополнительные очки за убийство без использования прицела.");
-        stringBuilder.AppendLine($"PointsPerNoScope: {config.PointsPerNoScope}");
-    
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Начисление опыта за ботов");
-        stringBuilder.AppendLine($"AwardPointsForBots: {config.AwardPointsForBots}");
-
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.");
-        stringBuilder.AppendLine($"MinPlayersForExperience: {config.MinPlayersForExperience}");
-
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Сообщения событий");            
-        string escapedMvpMessage = config.MvpAwardMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"MvpAwardMessage: \"{escapedMvpMessage}\"");    
-        string escapedRoundWinMessage = config.RoundWinMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"RoundWinMessage: \"{escapedRoundWinMessage}\"");
-        string escapedRoundLossMessage = config.RoundLossMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"RoundLossMessage: \"{escapedRoundLossMessage}\"");
-        string escapedSuicideMessage = config.SuicideMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"SuicideMessage: \"{escapedSuicideMessage}\"");      
-        string escapedNoScopeMessage = config.NoScopeKillMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"NoScopeKillMessage: \"{escapedNoScopeMessage}\"");
-        string escapedKillMessage = config.KillMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"KillMessage: \"{escapedKillMessage}\"");
-        string escapedHeadshotMessage = config.HeadshotMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"HeadshotMessage: \"{escapedHeadshotMessage}\"");      
-        string escapedAssistMessage = config.AssistMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"AssistMessage: \"{escapedAssistMessage}\"");
-        string escapedDeathMessage = config.DeathMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"DeathMessage: \"{escapedDeathMessage}\"");   
-        
-        stringBuilder.AppendLine(); 
-        stringBuilder.AppendLine("# Сообщение, если не хватает необходимого количества игроков.");       
-        string escapedGetActivePlayerCountMsg = config.GetActivePlayerCountMsg.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{escapedGetActivePlayerCountMsg}\"");
-
-        stringBuilder.AppendLine(); 
-        stringBuilder.AppendLine("# Сообщения команды !rank");
-        stringBuilder.AppendLine($"NoRankMessage: \"{EscapeMessage(config.NoRankMessage)}\"");
-        stringBuilder.AppendLine($"CurrentRankMessage: \"{EscapeMessage(config.CurrentRankMessage)}\"");
-        stringBuilder.AppendLine($"NextRankMessage: \"{EscapeMessage(config.NextRankMessage)}\"");
-        stringBuilder.AppendLine($"MaxRankMessage: \"{EscapeMessage(config.MaxRankMessage)}\"");
-        stringBuilder.AppendLine($"StatsMessage: \"{EscapeMessage(config.StatsMessage)}\"");
-
-        stringBuilder.AppendLine(); 
-        stringBuilder.AppendLine("# Сообщения команды !top");
-        string escapedTopCommandIntroMessage = config.TopCommandIntroMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"TopCommandIntroMessage: \"{escapedTopCommandIntroMessage}\"");
-        string escapedTopPlayerMessage = config.TopPlayerMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"TopPlayerMessage: \"{escapedTopPlayerMessage}\"");
-        
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Сообщения команды !topdeaths");
-        stringBuilder.AppendLine($"TopDeathsIntroMessage: \"{EscapeMessage(config.TopDeathsIntroMessage)}\"");
-        stringBuilder.AppendLine($"TopDeathsPlayerMessage: \"{EscapeMessage(config.TopDeathsPlayerMessage)}\"");
-
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Сообщения команды !topkdr");
-        stringBuilder.AppendLine($"TopKdrIntroMessage: \"{EscapeMessage(config.TopKdrIntroMessage)}\"");
-        stringBuilder.AppendLine($"TopKdrPlayerMessage: \"{EscapeMessage(config.TopKdrPlayerMessage)}\"");
-
-        stringBuilder.AppendLine();
-        stringBuilder.AppendLine("# Сообщения команды !topkills");
-        stringBuilder.AppendLine($"TopKillsIntroMessage: \"{EscapeMessage(config.TopKillsIntroMessage)}\"");
-        stringBuilder.AppendLine($"TopKillsPlayerMessage: \"{EscapeMessage(config.TopKillsPlayerMessage)}\"");
-
-        stringBuilder.AppendLine();      
-        stringBuilder.AppendLine("# Сообщения при повышении или понижении звания");
-        string escapedRankUpMessage = config.RankUpMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"RankUpMessage: \"{escapedRankUpMessage}\"");
-        string escapedRankDownMessage = config.RankDownMessage.Replace("\"", "\\\"").Replace("\n", "\\n");
-        stringBuilder.AppendLine($"RankDownMessage: \"{escapedRankDownMessage}\"");        
-
-
-        File.WriteAllText(filePath, stringBuilder.ToString());
-    }
-    public PluginConfig LoadConfig(string filePath)
-    {
-        if (!File.Exists(filePath))
+        private const string PluginAuthor = "ABKAM";
+        private const string PluginName = "[RanksPoints] by ABKAM";
+        private const string PluginVersion = "2.0";
+        private const string DbConfigFileName = "dbconfig.json";
+        private DatabaseConfig? dbConfig;
+        private PluginConfig config;  
+        private bool isActiveRoundForPoints;       
+        private HashSet<string> activePlayers = new HashSet<string>();  
+        private Dictionary<string, PlayerResetInfo> playerResetTimes = new Dictionary<string, PlayerResetInfo>();
+        public class PluginConfig
         {
-            var config = new PluginConfig();
-            SaveConfig(config, filePath);
-            return config;
+            public int MinPlayersForExperience { get; set; } = 4; 
+            public int PointsPerRoundWin { get; set; } = 2; 
+            public int PointsPerRoundLoss { get; set; } = -2; 
+            public int PointsPerMVP { get; set; } = 3;
+            public int PointsForSuicide { get; set; } = -6; 
+            public int PointsForKill { get; set; } = 5; 
+            public int PointsForDeath { get; set; } = -5;
+            public int PointsForAssist { get; set; } = 1; 
+            public int PointsForNoScopeAWP { get; set; } = 1; 
+            public int PointsForHeadshot { get; set; } = 1;
+            public int PointsForBombDefusal { get; set; } = 2; 
+            public int PointsForBombPlanting { get; set; } = 2; 
+            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игроков для начисления опыта.";
+            public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Ваш опыт:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} за {REASON}]";
+            public string SuicideMessage { get; set; } = "самоубийство"; 
+            public string SuicideMessageColor { get; set; } = "{Red}"; 
+            public string DeathMessage { get; set; } = "смерть"; 
+            public string DeathMessageColor { get; set; } = "{Red}"; 
+            public string KillMessage { get; set; } = "убийство"; 
+            public string KillMessageColor { get; set; } = "{Green}";  
+            public string NoScopeAWPMessage { get; set; } = "убийство с AWP без прицела";
+            public string NoScopeAWPMessageColor { get; set; } = "{Blue}";
+            public string HeadshotMessage { get; set; } = "выстрел в голову"; 
+            public string HeadshotMessageColor { get; set; } = "{Yellow}";
+            public string AssistMessage { get; set; } = "ассист"; 
+            public string AssistMessageColor { get; set; } = "{Blue}";  
+            public string RoundWinMessage { get; set; } = "победа в раунде";
+            public string RoundWinMessageColor { get; set; } = "{Green}";           
+            public string RoundLossMessage { get; set; } = "проигрыш в раунде"; 
+            public string RoundLossMessageColor { get; set; } = "{Red}";   
+            public string MVPMessage { get; set; } = "MVP"; 
+            public string MVPMessageColor { get; set; } = "{Gold}";    
+            public string BombDefusalMessage { get; set; } = "обезвреживание бомбы";          
+            public string BombDefusalMessageColor { get; set; } = "{Green}";     
+            public string BombPlantingMessage { get; set; } = "установку бомбы";             
+            public string BombPlantingMessageColor { get; set; } = "{Green}";          
+            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Звание: {Green}{RANK_NAME} {White}| Место: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Опыт: {Gold}{POINTS} {White}| Убийства: {Green}{KILLS} {White}| Смерти: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Время на сервере: {Gold}{PLAY_TIME}";                                                            
+            public string TimeFormat { get; set; } = "{0}д {1}ч {2}мин";   
+            public string TopCommandIntroMessage { get; set; } = "[ {Blue}Топ игроков{White} ]"; 
+            public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} очков{White}"; 
+            public string TopCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках."; 
+            public string TopCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."; 
+            public string TopKillsCommandIntroMessage { get; set; } = "[ {Green}Топ игроков по убийствам{White} ]";
+            public string TopKillsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Green}{KILLS} убийств{White}";
+            public string TopKillsCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках по убийствам.";
+            public string TopKillsCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды.";
+            public string TopDeathsCommandIntroMessage { get; set; } = "[ {Red}Топ игроков по смертям{White} ]";
+            public string TopDeathsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Red}{DEATHS} смертей{White}";
+            public string TopDeathsCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках по смертям.";
+            public string TopDeathsCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."; 
+            public string TopKDRCommandIntroMessage { get; set; } = "[ {Yellow}Топ игроков по KDR{White} ]";
+            public string TopKDRCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}";
+            public string TopKDRCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках по KDR.";
+            public string TopKDRCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды.";
+            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Топ игроков по времени на сервере{White} ]";
+            public string TopTimeCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}";
+            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках по времени на сервере.";
+            public string TopTimeCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды.";
+            public string TopTimeFormat { get; set; } = "{0}д {1}ч {2}мин";
+            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] Сбросить статистику можно только раз в 3 часа.";
+            public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Ваша статистика сброшена.";
+            public double ResetStatsCooldownHours { get; set; } = 3.0; 
+            public string RanksCommandIntroMessage { get; set; } = "[ {Gold}Список званий{White} ]";
+            public string RanksCommandRankMessage { get; set; } = "{NAME} - {Green}{EXPERIENCE} опыта{White}";
+            public string RanksCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о званиях.";
+            public string RanksCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды.";
+            public string LvlCommandIntroMessage { get; set; } = "[ {Gold}Список доступных команд{White} ]"; 
+            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Показывает ваше текущее звание и статистику";
+            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Показывает топ-10 игроков по очкам";
+            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Показывает топ-10 игроков по убийствам";  
+            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Показывает топ-10 игроков по смертям";
+            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Показывает топ-10 игроков по KDR";
+            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Показывает топ-10 игроков по времени на сервере";
+            public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Сбросить свою статистику (можно использовать раз в 3 часа)";
+            public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Показывает список всех званий и опыта, необходимого для их получения";       
+            public string RankUpMessage { get; set; } = "Ваше звание было повышено до {RANK_NAME}!";
+            public string RankDownMessage { get; set; } = "Ваше звание было понижено до {RANK_NAME}.";
+
+        } 
+        public class RankConfig
+        {
+            public int Id { get; set; }
+            public string? Name { get; set; }
+            public int MinExperience { get; set; } 
         }
-        else
+        public void SaveConfig(PluginConfig config, string filePath)
         {
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
+            var stringBuilder = new StringBuilder();
 
-            var yaml = File.ReadAllText(filePath);
-            return deserializer.Deserialize<PluginConfig>(yaml);
-        }
-    }  
-    private User?[] _usersArray = new User?[65];
+            stringBuilder.AppendLine("# Конфигурационный файл для RankPointsPlugin");
 
-    public override void Load(bool hotReload)
-    {
-        base.Load(hotReload);
-        topPlayersFilePath = Path.Combine(ModuleDirectory, "stats_topPlayers.json");
-        dataFilePath = Path.Combine(ModuleDirectory, "stats_playerPoints.json");
-        ranksFilePath = Path.Combine(ModuleDirectory, "settings_ranks.yaml");   
-        topKillsFilePath = Path.Combine(ModuleDirectory, "stats_TopKills.json");  
-        topDeathsFilePath = Path.Combine(ModuleDirectory, "stats_TopDeaths.json");
-        var configFilePath = Path.Combine(ModuleDirectory, "Config.yaml");
-
-        _config = LoadOrCreateConfig(configFilePath);
-
-        InitializeRanks();  
-        LoadPlayerPoints(); 
-        LoadTopPlayers();
-        LoadStatistics();
-        LoadTopKills();
-        LoadTopDeaths();
-        RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
-        RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
-        RegisterEventHandler<EventRoundMvp>(OnPlayerMVP);
-        RegisterEventHandler<EventRoundStart>(OnRoundStart);
-        RegisterEventHandler<EventPlayerConnect>(OnPlayerConnect);
-        RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Очки за убийство - количество очков, добавляемое игроку за убийство противника.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Очки отнимаемые за смерть - количество очков, вычитаемое у игрока за смерть.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Очки за помощь - количество очков, добавляемое игроку за помощь в убийстве.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Очки за самоубийство - количество очков, вычитаемое у игрока за самоубийство.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Очки за выстрел в голову - дополнительные очки за убийство с выстрелом в голову.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Очки за победу в раунде - количество очков, добавляемое игроку за победу его команды в раунде.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Очки за проигрыш в раунде - количество очков, вычитаемое у игрока за проигрыш его команды в раунде.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Очки за MVP - количество очков, добавляемое игроку за получение звания MVP раунда.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Очки за убийство с AWP без прицела - дополнительные очки за убийство без использования прицела.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Очки за обезвреживание бомбы");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Очки за установку бомбы");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Сообщение о повышении звания.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Сообщение о понижении звания.");
 
 
-        if (!File.Exists(dataFilePath))
-        {
-            SavePlayerPoints(); 
-        }
-        Console.WriteLine($"{ModuleName} v{ModuleVersion} by ABKAM loaded.");
-    }
-    public void Unload()
-    {
-        SavePlayerPoints(); 
-    }   
 
-    public PluginConfig LoadOrCreateConfig(string filePath)
-    {
-        if (!File.Exists(filePath))
-        {
-            var defaultConfig = new PluginConfig();
-            SaveConfig(defaultConfig, filePath);
-            return defaultConfig;
-        }
-        else
-        {
-            var deserializer = new DeserializerBuilder().Build();
-            var yaml = File.ReadAllText(filePath);
-            return deserializer.Deserialize<PluginConfig>(yaml);
-        }
-    }
+            stringBuilder.AppendLine("# Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.");
+            stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{EscapeMessage(config.GetActivePlayerCountMsg)}\"");
+            AppendConfigValue(stringBuilder, nameof(config.MinPlayersForExperience), config.MinPlayersForExperience);
+ 
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# Сообщения при получении опыта");                  
+            stringBuilder.AppendLine($"PointsChangeMessage: \"{EscapeMessage(config.PointsChangeMessage)}\"");
+            stringBuilder.AppendLine("# События");            
+            stringBuilder.AppendLine($"SuicideMessage: \"{EscapeMessage(config.SuicideMessage)}\"");
+            stringBuilder.AppendLine($"SuicideMessageColor: \"{EscapeMessage(config.SuicideMessageColor)}\"");
+            stringBuilder.AppendLine($"DeathMessage: \"{EscapeMessage(config.DeathMessage)}\"");
+            stringBuilder.AppendLine($"DeathMessageColor: \"{EscapeMessage(config.DeathMessageColor)}\"");
+            stringBuilder.AppendLine($"KillMessage: \"{EscapeMessage(config.KillMessage)}\"");
+            stringBuilder.AppendLine($"KillMessageColor: \"{EscapeMessage(config.KillMessageColor)}\"");     
+            stringBuilder.AppendLine($"NoScopeAWPMessage: \"{EscapeMessage(config.NoScopeAWPMessage)}\"");
+            stringBuilder.AppendLine($"NoScopeAWPMessageColor: \"{EscapeMessage(config.NoScopeAWPMessageColor)}\"");            
+            stringBuilder.AppendLine($"HeadshotMessage: \"{EscapeMessage(config.HeadshotMessage)}\"");
+            stringBuilder.AppendLine($"HeadshotMessageColor: \"{EscapeMessage(config.HeadshotMessageColor)}\"");     
+            stringBuilder.AppendLine($"AssistMessage: \"{EscapeMessage(config.AssistMessage)}\"");
+            stringBuilder.AppendLine($"AssistMessageColor: \"{EscapeMessage(config.AssistMessageColor)}\"");            
+            stringBuilder.AppendLine($"RoundWinMessage: \"{EscapeMessage(config.RoundWinMessage)}\"");
+            stringBuilder.AppendLine($"RoundWinMessageColor: \"{EscapeMessage(config.RoundWinMessageColor)}\"");     
+            stringBuilder.AppendLine($"RoundLossMessage: \"{EscapeMessage(config.RoundLossMessage)}\"");
+            stringBuilder.AppendLine($"RoundLossMessageColor: \"{EscapeMessage(config.RoundLossMessageColor)}\"");     
+            stringBuilder.AppendLine($"MVPMessage: \"{EscapeMessage(config.MVPMessage)}\"");
+            stringBuilder.AppendLine($"MVPMessageColor: \"{EscapeMessage(config.MVPMessageColor)}\"");     
+            stringBuilder.AppendLine($"BombDefusalMessage: \"{EscapeMessage(config.BombDefusalMessage)}\"");
+            stringBuilder.AppendLine($"BombDefusalMessageColor: \"{EscapeMessage(config.BombDefusalMessageColor)}\"");   
+            stringBuilder.AppendLine($"BombPlantingMessage: \"{EscapeMessage(config.BombPlantingMessage)}\"");
+            stringBuilder.AppendLine($"BombPlantingMessageColor: \"{EscapeMessage(config.BombPlantingMessageColor)}\"");       
+            
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !rank");
+            stringBuilder.AppendLine($"RankCommandMessage : \"{EscapeMessage(config.RankCommandMessage)}\"");   
+            stringBuilder.AppendLine($"TimeFormat: \"{EscapeMessage(config.TimeFormat)}\"");               
+            
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !top");
+            stringBuilder.AppendLine($"TopCommandIntroMessage : \"{EscapeMessage(config.TopCommandIntroMessage)}\"");   
+            stringBuilder.AppendLine($"TopCommandPlayerMessage: \"{EscapeMessage(config.TopCommandPlayerMessage)}\"");       
+            stringBuilder.AppendLine($"TopCommandNoDataMessage: \"{EscapeMessage(config.TopCommandNoDataMessage)}\"");     
+            stringBuilder.AppendLine($"TopCommandErrorMessage: \"{EscapeMessage(config.TopCommandErrorMessage)}\"");     
 
-    private void InitializeRanks()
-    {
-        if (!File.Exists(ranksFilePath))
-        {
-            ranks = new List<Rank>
-            {
-                new Rank { Name = "Серебро - I", PointsRequired = 0 },
-                new Rank { Name = "Серебро - II", PointsRequired = 10 },
-                new Rank { Name = "Серебро - III", PointsRequired = 25 },
-                new Rank { Name = "Серебро - IV", PointsRequired = 50 },
-                new Rank { Name = "Серебро Элита", PointsRequired = 75 },
-                new Rank { Name = "Серебро - Великий Магистр", PointsRequired = 100 },
-                new Rank { Name = "Золотая Звезда - I", PointsRequired = 150 },
-                new Rank { Name = "Золотая Звезда - II", PointsRequired = 200 },
-                new Rank { Name = "Золотая Звезда - III", PointsRequired = 300 },      
-                new Rank { Name = "Золотая Звезда - Магистр", PointsRequired = 500 },
-                new Rank { Name = "Магистр-хранитель - I", PointsRequired = 750 },          
-                new Rank { Name = "Магистр-хранитель - II", PointsRequired = 1000 },     
-                new Rank { Name = "Магистр-хранитель - Элита", PointsRequired = 1500 },     
-                new Rank { Name = "Заслуженный Магистр-хранитель", PointsRequired = 2000 },      
-                new Rank { Name = "Легендарный Беркут", PointsRequired = 3000 },       
-                new Rank { Name = "Легендарный Беркут-магистр", PointsRequired = 5000 },    
-                new Rank { Name = "Великий Магистр - Высшего Ранга", PointsRequired = 7500 },   
-                new Rank { Name = "Всемирная Элита", PointsRequired = 10000 },                                                                                                                                                                                                                       
-            };
-            SaveRanks(); 
-        }
-        else
-        {
-            LoadRanks();
-        }
-    }
-    private void LoadTopPlayers()
-    {
-        if (File.Exists(topPlayersFilePath))
-        {
-            string json = File.ReadAllText(topPlayersFilePath);
-            topPlayersList = JsonConvert.DeserializeObject<List<TopPlayer>>(json) ?? new List<TopPlayer>();
-        }
-        else
-        {
-            topPlayersList = new List<TopPlayer>();
-        }
-    }
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !topkills");       
+            stringBuilder.AppendLine($"TopKillsCommandIntroMessage: \"{EscapeMessage(config.TopKillsCommandIntroMessage)}\"");
+            stringBuilder.AppendLine($"TopKillsCommandPlayerMessage: \"{EscapeMessage(config.TopKillsCommandPlayerMessage)}\"");
+            stringBuilder.AppendLine($"TopKillsCommandNoDataMessage: \"{EscapeMessage(config.TopKillsCommandNoDataMessage)}\"");
+            stringBuilder.AppendLine($"TopKillsCommandErrorMessage: \"{EscapeMessage(config.TopKillsCommandErrorMessage)}\"");
 
-    private void SaveRanks()
-    {
-        var serializer = new SerializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
-        
-        var yaml = serializer.Serialize(ranks);
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !topdeaths");              
+            stringBuilder.AppendLine($"TopDeathsCommandIntroMessage: \"{EscapeMessage(config.TopDeathsCommandIntroMessage)}\"");
+            stringBuilder.AppendLine($"TopDeathsCommandPlayerMessage: \"{EscapeMessage(config.TopDeathsCommandPlayerMessage)}\"");
+            stringBuilder.AppendLine($"TopDeathsCommandNoDataMessage: \"{EscapeMessage(config.TopDeathsCommandNoDataMessage)}\"");
+            stringBuilder.AppendLine($"TopDeathsCommandErrorMessage: \"{EscapeMessage(config.TopDeathsCommandErrorMessage)}\"");
 
-        var yamlWithComments = "# Это файл конфигурации рангов для RankPoints\n" + yaml;
-        if (ranksFilePath != null)
-        {
-            File.WriteAllText(ranksFilePath, yamlWithComments);
-        }
-    }
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !topkdr");              
+            stringBuilder.AppendLine($"TopKDRCommandIntroMessage: \"{EscapeMessage(config.TopKDRCommandIntroMessage)}\"");
+            stringBuilder.AppendLine($"TopKDRCommandPlayerMessage: \"{EscapeMessage(config.TopKDRCommandPlayerMessage)}\"");
+            stringBuilder.AppendLine($"TopKDRCommandNoDataMessage: \"{EscapeMessage(config.TopKDRCommandNoDataMessage)}\"");
+            stringBuilder.AppendLine($"TopKDRCommandErrorMessage: \"{EscapeMessage(config.TopKDRCommandErrorMessage)}\"");  
 
-    private void LoadRanks()
-    {
-        if (!File.Exists(ranksFilePath))
-        {
-            ranks = new List<Rank>();
-            return;
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !toptime");              
+            stringBuilder.AppendLine($"TopTimeCommandIntroMessage: \"{EscapeMessage(config.TopTimeCommandIntroMessage)}\"");
+            stringBuilder.AppendLine($"TopTimeCommandPlayerMessage: \"{EscapeMessage(config.TopTimeCommandPlayerMessage)}\"");
+            stringBuilder.AppendLine($"TopTimeCommandNoDataMessage : \"{EscapeMessage(config.TopTimeCommandNoDataMessage)}\"");
+            stringBuilder.AppendLine($"TopTimeCommandErrorMessage: \"{EscapeMessage(config.TopTimeCommandErrorMessage)}\"");   
+            stringBuilder.AppendLine($"TopTimeFormat: \"{EscapeMessage(config.TopTimeFormat)}\"");   
+            
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !resetstats");              
+            stringBuilder.AppendLine($"ResetStatsCooldownMessage: \"{EscapeMessage(config.ResetStatsCooldownMessage)}\"");
+            stringBuilder.AppendLine($"ResetStatsSuccessMessage: \"{EscapeMessage(config.ResetStatsSuccessMessage)}\""); 
+            stringBuilder.AppendLine($"ResetStatsCooldownHours: \"{EscapeMessage(config.ResetStatsCooldownHours.ToString())}\"");   
+
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !ranks");              
+            stringBuilder.AppendLine($"RanksCommandIntroMessage: \"{EscapeMessage(config.RanksCommandIntroMessage)}\"");
+            stringBuilder.AppendLine($"RanksCommandRankMessage: \"{EscapeMessage(config.RanksCommandRankMessage)}\""); 
+            stringBuilder.AppendLine($"RanksCommandNoDataMessage: \"{EscapeMessage(config.RanksCommandNoDataMessage)}\"");   
+            stringBuilder.AppendLine($"RanksCommandErrorMessage: \"{EscapeMessage(config.RanksCommandErrorMessage)}\"");     
+
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("# !lvl");    
+            stringBuilder.AppendLine($"LvlCommandIntroMessage: \"{EscapeMessage(config.LvlCommandIntroMessage)}\"");                      
+            stringBuilder.AppendLine($"RankCommandDescription: \"{EscapeMessage(config.RankCommandDescription)}\"");
+            stringBuilder.AppendLine($"TopCommandDescription: \"{EscapeMessage(config.TopCommandDescription)}\""); 
+            stringBuilder.AppendLine($"TopKillsCommandDescription: \"{EscapeMessage(config.TopKillsCommandDescription)}\"");   
+            stringBuilder.AppendLine($"TopDeathsCommandDescription: \"{EscapeMessage(config.TopDeathsCommandDescription)}\"");   
+            stringBuilder.AppendLine($"TopKDRCommandDescription: \"{EscapeMessage(config.TopKDRCommandDescription)}\"");
+            stringBuilder.AppendLine($"TopTimeCommandDescription: \"{EscapeMessage(config.TopTimeCommandDescription)}\""); 
+            stringBuilder.AppendLine($"ResetStatsCommandDescription: \"{EscapeMessage(config.ResetStatsCommandDescription)}\"");   
+            stringBuilder.AppendLine($"RanksCommandDescription: \"{EscapeMessage(config.RanksCommandDescription)}\"");                                                                
+
+            File.WriteAllText(filePath, stringBuilder.ToString());
         }
 
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
-
-        var yaml = File.ReadAllText(ranksFilePath);
-
-        ranks = deserializer.Deserialize<List<Rank>>(yaml);
-    }
-
-    private class Rank
-    {
-        public string? Name { get; set; }
-        public int PointsRequired { get; set; }
-    }
-
-    private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
-    {
-        isActiveRoundForPoints = GetActivePlayerCount() >= _config.MinPlayersForExperience;
-
-        if (!isActiveRoundForPoints)
+        private string EscapeMessage(string message)
         {
-            string formattedMessage = _config.GetActivePlayerCountMsg
-                .Replace("{MIN_PLAYERS}", _config.MinPlayersForExperience.ToString());
-            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
-            BroadcastToPlayers(formattedMessage);
+            return message.Replace("\"", "\\\"").Replace("\n", "\\n");
         }
 
-        return HookResult.Continue;
-    }
-    private void LoadTopKills()
-    {
-        if (File.Exists(topKillsFilePath))
+        private void AppendConfigValueWithComment(StringBuilder sb, string key, object value, string comment)
         {
-            string json = File.ReadAllText(topKillsFilePath);
-            topKillersList = JsonConvert.DeserializeObject<List<TopPlayer>>(json) ?? new List<TopPlayer>();
+            sb.AppendLine($"# {comment}");
+            sb.AppendLine($"{key}: {value}");
+            sb.AppendLine();
         }
-        else
+        private void AppendConfigValue(StringBuilder sb, string key, object value)
         {
-            topKillersList = new List<TopPlayer>();
-            SaveTopKills(); 
-        }
-    }
-    private void SaveTopKills()
-    {
-        string json = JsonConvert.SerializeObject(topKillersList, Formatting.Indented);
-
-        var directory = Path.GetDirectoryName(topKillsFilePath);
-        if (directory != null && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        if (topKillsFilePath != null)
-        {
-            File.WriteAllText(topKillsFilePath, json);
-        }
-    }
-    private void LoadTopDeaths()
-    {
-        if (File.Exists(topDeathsFilePath))
-        {
-            string json = File.ReadAllText(topDeathsFilePath);
-            topDeathsList = JsonConvert.DeserializeObject<List<TopPlayer>>(json) ?? new List<TopPlayer>();
-        }
-        else
-        {
-            topDeathsList = new List<TopPlayer>();
-            SaveTopDeaths(); 
-        }
-    }
-    private void SaveTopDeaths()
-    {
-        string json = JsonConvert.SerializeObject(topDeathsList, Formatting.Indented);
-
-        var directory = Path.GetDirectoryName(topDeathsFilePath);
-        if (directory != null && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        if (topDeathsFilePath != null)
-        {
-            File.WriteAllText(topDeathsFilePath, json);
-        }
-    }
-    private void SaveTopKDR()
-    {
-        string json = JsonConvert.SerializeObject(topKDRList, Formatting.Indented);
-        var topKdrFilePath = Path.Combine(ModuleDirectory, "stats_TopKdr.json");
-
-        var directory = Path.GetDirectoryName(topKdrFilePath);
-        if (directory != null && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        File.WriteAllText(topKdrFilePath, json);
-    }
-    private void LoadTopKDR()
-    {
-        var topKdrFilePath = Path.Combine(ModuleDirectory, "stats_TopKdr.json");
-        if (File.Exists(topKdrFilePath))
-        {
-            string json = File.ReadAllText(topKdrFilePath);
-            topKDRList = JsonConvert.DeserializeObject<List<TopPlayerKDR>>(json) ?? new List<TopPlayerKDR>();
-        }
-        else
-        {
-            topKDRList = new List<TopPlayerKDR>();
-            SaveTopKDR();
-        }
-    }
-    private void BroadcastToPlayers(string message)
-    {
-        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
-        {
-            if (player != null && player.IsValid && !player.IsBot && player.TeamNum != (int)CsTeam.Spectator)
-            {
-                player.PrintToChat(message);
-            }
-        }
-    }
-    private void UpdateTopKDRList()
-    {
-        var kdrCalculations = new Dictionary<string, double>();
-
-        foreach (var kvp in playerKills)
-        {
-            string steamID = kvp.Key;
-            int kills = kvp.Value;
-            int deaths = playerDeaths.TryGetValue(steamID, out var deathCount) ? deathCount : 0;
-
-            double kdr = CalculateKDRatio(kills, deaths);
-            kdrCalculations.Add(steamID, kdr);
-        }
-
-        var sortedKDRs = kdrCalculations.OrderByDescending(kvp => kvp.Value)
-                                        .Take(10);
-
-        topKDRList = sortedKDRs.Select(kvp => new TopPlayerKDR
-        {
-            SteamID = kvp.Key,
-            Nickname = GetPlayerNickname(kvp.Key),
-            KDR = kvp.Value
-        }).ToList();
-    }
-    private void UpdateTopKillsList()
-    {
-        var updatedTopKillers = playerKills
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-        topKillersList = updatedTopKillers.Select(kvp => new TopPlayer
-        {
-            SteamID = kvp.Key,
-            Nickname = GetPlayerNickname(kvp.Key),
-            Points = kvp.Value  
-        }).ToList();
-    }
-    private void UpdateTopDeathsList()
-    {
-        var updatedTopDeaths = playerDeaths
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-        topDeathsList = updatedTopDeaths.Select(kvp => new TopPlayer
-        {
-            SteamID = kvp.Key,
-            Nickname = GetPlayerNickname(kvp.Key),
-            Points = kvp.Value  
-        }).ToList();
-    }
-    private void SaveStatistics()
-    {
-        File.WriteAllText(Path.Combine(ModuleDirectory, "stats_playerKills.json"), JsonConvert.SerializeObject(playerKills, Formatting.Indented));
-        File.WriteAllText(Path.Combine(ModuleDirectory, "stats_playerDeaths.json"), JsonConvert.SerializeObject(playerDeaths, Formatting.Indented));
-    }
-
-    private void LoadStatistics()
-    {
-        var killsFilePath = Path.Combine(ModuleDirectory, "stats_playerKills.json");
-        var deathsFilePath = Path.Combine(ModuleDirectory, "stats_playerDeaths.json");
-
-        if (File.Exists(killsFilePath))
-        {
-            var killsJson = File.ReadAllText(killsFilePath);
-            playerKills = JsonConvert.DeserializeObject<Dictionary<string, int>>(killsJson) ?? new Dictionary<string, int>();
-        }
-
-        if (File.Exists(deathsFilePath))
-        {
-            var deathsJson = File.ReadAllText(deathsFilePath);
-            playerDeaths = JsonConvert.DeserializeObject<Dictionary<string, int>>(deathsJson) ?? new Dictionary<string, int>();
-        }
-    }
-    private int GetActivePlayerCount()
-    {
-        return _usersArray.Count(user => user != null);
-    }
-    private HookResult OnPlayerConnect(EventPlayerConnect connectEvent, GameEventInfo info)
-    {
-        try
-        {
-            if (connectEvent == null)
-            {
-                return HookResult.Continue;
-            }
-            if (connectEvent.Userid == null)
-            {
-                return HookResult.Continue;
-            }
-            if (_usersArray == null)
-            {
-                return HookResult.Continue;
-            }
-
-            uint steamId = ConvertXuidToUint(connectEvent.Xuid);
-
-            int slot = MapSteamIdToSlot(steamId);
-            if (slot < 0 || slot >= _usersArray.Length)
-            {
-                return HookResult.Continue;
-            }
-
-            _usersArray[slot] = CreateUser(connectEvent, steamId);
-
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[RankPointsPlugin] An exception occurred in OnPlayerConnect: {ex}");
-        }
-
-        return HookResult.Continue;
-    }
-
-    private uint ConvertXuidToUint(ulong xuid)
-    {
-        return (uint)xuid;
-    }   
-
-    private User CreateUser(EventPlayerConnect connectEvent, uint steamId)
-    {
-        return new User
-        {
-            SteamId = steamId.ToString(),
-            Experience = 0,
-            Score = 0,
-            Kills = 0,
-            Deaths = 0,
-            Assists = 0,
-            Damage = 0,
-            Mvp = 0,
-            HeadshotKills = 0,
-            PercentageHeadshot = 0.0,
-            Kdr = 0.0f
-        };
-    }
-
-    private HookResult OnPlayerDisconnect(EventPlayerDisconnect disconnectEvent, GameEventInfo info)
-    {
-        if (disconnectEvent?.Userid != null)
-        {
-            uint steamId = (uint)disconnectEvent.Userid.SteamID;
-            if (steamIdToSlotMap.TryGetValue(steamId, out int slot))
-            {
-                if (slot >= 0 && slot < _usersArray.Length)
-                {
-                    _usersArray[slot] = null;
-                    steamIdToSlotMap.Remove(steamId); 
-                }
-                else
-                {
-                    Console.WriteLine($"[RankPointsPlugin] Ошибка: Игрок с SteamID {steamId} не найден в допустимых слотах.");
-                }
-            }
-        }
-        else
-        {
-            Console.WriteLine("[RankPointsPlugin] Ошибка: disconnectEvent или disconnectEvent.Userid равен null.");
-        }
-        return HookResult.Continue;
-    }
-
-    private Dictionary<uint, int> steamIdToSlotMap = new Dictionary<uint, int>();
-
-    private int MapSteamIdToSlot(uint steamId)
-    {
-        if (steamIdToSlotMap.TryGetValue(steamId, out int existingSlot))
-        {
-            return existingSlot;
-        }
-
-        int newSlot = FindAvailableSlotForSteamId(steamId);
-
-        if (newSlot >= 0)
-        {
-            steamIdToSlotMap.Add(steamId, newSlot);
-        }
-
-        return newSlot;
-    }  
-
-    private int FindAvailableSlotForSteamId(uint steamId)
-    {
-        for (int i = 0; i < _usersArray.Length; i++)
-        {
-            if (_usersArray[i] == null)
-            {
-                return i;
-            }
-        }
-        
-        return -1;
-    }     
-    private HookResult OnPlayerMVP(EventRoundMvp mvpEvent, GameEventInfo info)
-    {
-        if (GetActivePlayerCount() < _config.MinPlayersForExperience)
-        {
-            return HookResult.Continue;
+            sb.AppendLine($"{key}: {value}");
         }        
-        CCSPlayerController playerController = mvpEvent.Userid;
-
-        if (playerController != null && playerController.IsValid && !playerController.IsBot && playerController.TeamNum != (int)CsTeam.Spectator)
+        private List<RankConfig> LoadRanksConfig()
         {
-            var steamID = playerController.SteamID.ToString();
-            AddPoints(steamID, _config.PointsPerMVP);
+            var filePath = Path.Combine(ModuleDirectory, "settings_ranks.yml");
 
-            string formattedMessage = _config.MvpAwardMessage
-                .Replace("{POINTS}", playerPoints[steamID].ToString())
-                .Replace("{MVP_POINTS}", _config.PointsPerMVP.ToString());
-            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
+            if (!File.Exists(filePath))
+            {
+                var defaultRanks = new List<RankConfig>
+                {
+                    new RankConfig { Id = 1, Name = "Серебро - I", MinExperience = 0 },
+                    new RankConfig { Id = 2, Name = "Серебро - II", MinExperience = 10 },
+                    new RankConfig { Id = 3, Name = "Серебро - III", MinExperience = 25 },
+                    new RankConfig { Id = 4, Name = "Серебро - IV", MinExperience = 50 },
+                    new RankConfig { Id = 5, Name = "Серебро Элита", MinExperience = 75 },
+                    new RankConfig { Id = 6, Name = "Серебро - Великий Магистр", MinExperience = 100 },
+                    new RankConfig { Id = 7, Name = "Золотая Звезда - I", MinExperience = 150 },
+                    new RankConfig { Id = 8, Name = "Золотая Звезда - II", MinExperience = 200 },
+                    new RankConfig { Id = 9, Name = "Золотая Звезда - III", MinExperience = 300 },
+                    new RankConfig { Id = 10, Name = "Золотая Звезда - Магистр", MinExperience = 500 },                                                                                                                                            
+                    new RankConfig { Id = 11, Name = "Магистр-хранитель - I", MinExperience = 750 },  
+                    new RankConfig { Id = 12, Name = "Магистр-хранитель - II", MinExperience = 1000 },  
+                    new RankConfig { Id = 13, Name = "Магистр-хранитель - Элита", MinExperience = 1500 },  
+                    new RankConfig { Id = 14, Name = "Заслуженный Магистр-хранитель", MinExperience = 2000 },  
+                    new RankConfig { Id = 15, Name = "Легендарный Беркут", MinExperience = 3000 },  
+                    new RankConfig { Id = 16, Name = "Легендарный Беркут-магистр", MinExperience = 5000 },
+                    new RankConfig { Id = 17, Name = "Великий Магистр - Высшего Ранга", MinExperience = 7500 },
+                    new RankConfig { Id = 18, Name = "Всемирная Элита", MinExperience = 10000 },  
+                };
 
-            playerController.PrintToChat(formattedMessage);
+                var serializer = new SerializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .Build();
+
+                var yaml = serializer.Serialize(defaultRanks);
+                File.WriteAllText(filePath, yaml);
+
+                return defaultRanks;
+            }
+
+            try
+            {
+                var yaml = File.ReadAllText(filePath);
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .Build();
+                var ranksConfig = deserializer.Deserialize<List<RankConfig>>(yaml);
+
+                return ranksConfig ?? new List<RankConfig>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при чтении файла конфигурации званий: {ex.Message}");
+                return new List<RankConfig>();
+            }
         }
 
-        return HookResult.Continue;
-    }
 
-
-    private HookResult OnRoundEnd(EventRoundEnd roundEndEvent, GameEventInfo info)
-    {
-        if (GetActivePlayerCount() < _config.MinPlayersForExperience)
+        public static string ConvertSteamID64ToSteamID(string steamId64)
         {
+            if (ulong.TryParse(steamId64, out var communityId) && communityId > 76561197960265728)
+            {
+                var authServer = (communityId - 76561197960265728) % 2;
+                var authId = (communityId - 76561197960265728 - authServer) / 2;
+                return $"STEAM_0:{authServer}:{authId}";
+            }
+            return null; 
+        }
+        public override void Load(bool hotReload)
+        {
+            base.Load(hotReload);
+            CreateDbConfigIfNotExists();
+            dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));
+            RegisterListener<Listeners.OnClientConnected>(OnClientConnected);
+            RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
+            RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
+            RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
+            RegisterEventHandler<EventWeaponFire>(OnWeaponFire);
+            RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt);
+            RegisterEventHandler<EventRoundMvp>(OnPlayerMVP);
+            RegisterEventHandler<EventRoundStart>(OnRoundStart);
+            RegisterEventHandler<EventBombExploded>(OnBombExploded);
+            RegisterEventHandler<EventBombDefused>(OnBombDefused);
+            isActiveRoundForPoints = true; 
+            CreateTable();
+            config = LoadOrCreateConfig();
+            LoadRanksConfig();
+
+            CreateDbConfigIfNotExists();
+            dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));            
+        }
+        private void OnClientConnected(int playerSlot)
+        {
+            var player = Utilities.GetPlayerFromSlot(playerSlot);
+            if (player != null && !player.IsBot)
+            {
+                var steamId64 = player.SteamID.ToString();
+                var steamId = ConvertSteamID64ToSteamID(steamId64); 
+                var playerName = GetPlayerNickname(steamId64);
+                var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+
+                    var updateQuery = "UPDATE lvl_base SET lastconnect = @LastConnect WHERE steam = @SteamID;";
+                    var insertQuery = "INSERT INTO lvl_base (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
+                    connection.Execute(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
+                }
+
+                activePlayers.Add(steamId);  
+            }
+        }
+        private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
+        {
+            isActiveRoundForPoints = GetActivePlayerCount() >= config.MinPlayersForExperience;
+
+            if (!isActiveRoundForPoints)
+            {
+                string message = config.GetActivePlayerCountMsg
+                    .Replace("{MIN_PLAYERS}", config.MinPlayersForExperience.ToString());
+                message = ReplaceColorPlaceholders(message); 
+                BroadcastToPlayers(message); 
+            }
+
             return HookResult.Continue;
         }
-        
-        CsTeam winnerTeam = (CsTeam)roundEndEvent.Winner;
+        private HookResult OnBombExploded(EventBombExploded eventBombPlanted, GameEventInfo info)
+        {      
+            var planterSteamId64 = eventBombPlanted.Userid.SteamID.ToString();
+            var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
 
-        for (int playerIndex = 0; playerIndex <= Server.MaxPlayers; playerIndex++)
-        {
-            CCSPlayerController playerController = Utilities.GetPlayerFromUserid(playerIndex);
-
-            if (playerController != null && playerController.IsValid && !playerController.IsBot && playerController.TeamNum != (int)CsTeam.Spectator)
+            if (config.PointsForBombPlanting != 0)
             {
-                CsTeam playerTeam = (CsTeam)playerController.TeamNum;
+                string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
+                AddOrRemovePoints(planterSteamId, config.PointsForBombPlanting, eventBombPlanted.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
+            }    
 
-                var steamID = playerController.SteamID.ToString();
-
-                if (!playerPoints.ContainsKey(steamID))
-                {
-                    playerPoints[steamID] = 0; 
-                }
-
-                if (playerTeam == winnerTeam)
-                {
-                    AddPoints(steamID, _config.PointsPerRoundWin);
-                    string formattedMessage = _config.RoundWinMessage
-                        .Replace("{POINTS}", playerPoints[steamID].ToString())
-                        .Replace("{ROUND_WIN_POINTS}", _config.PointsPerRoundWin.ToString());
-                    formattedMessage = ReplaceColorPlaceholders(formattedMessage);
-                    playerController.PrintToChat(formattedMessage);
-                }
-                else
-                {
-                    AddPoints(steamID, _config.PointsPerRoundLoss);
-                    string formattedMessage = _config.RoundLossMessage
-                        .Replace("{POINTS}", playerPoints[steamID].ToString())
-                        .Replace("{ROUND_LOSS_POINTS}", _config.PointsPerRoundLoss.ToString());
-                    formattedMessage = ReplaceColorPlaceholders(formattedMessage);
-                    playerController.PrintToChat(formattedMessage);
-                }
-            }
+            return HookResult.Continue;
         }
-
-        return HookResult.Continue;
-    }
-    private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
-    {
-        isActiveRoundForPoints = GetActivePlayerCount() >= _config.MinPlayersForExperience;
-
-        if (!isActiveRoundForPoints)
+        private HookResult OnBombDefused(EventBombDefused eventBombDefused, GameEventInfo info)
         {
+            if (GetActivePlayerCount() < config.MinPlayersForExperience)
+            {
+                return HookResult.Continue;
+            }   
+
+            var defuserSteamId64 = eventBombDefused.Userid.SteamID.ToString();
+            var defuserSteamId = ConvertSteamID64ToSteamID(defuserSteamId64);
+
+            if (config.PointsForBombDefusal != 0)
+            {
+                string BombDefusalMessageColor = ReplaceColorPlaceholders(config.BombDefusalMessageColor);  
+                AddOrRemovePoints(defuserSteamId, config.PointsForBombDefusal, eventBombDefused.Userid, config.BombDefusalMessage, BombDefusalMessageColor);
+            }
+
             return HookResult.Continue;
         }
 
-        var killerSteamID = deathEvent.Attacker?.SteamID.ToString();
-        var victimSteamID = deathEvent.Userid.SteamID.ToString();
-
-        playerDeaths[victimSteamID] = playerDeaths.TryGetValue(victimSteamID, out var deaths) ? deaths + 1 : 1;
-
-        if (killerSteamID == victimSteamID)
+        private void BroadcastToPlayers(string message)
         {
-            AddPointsForNonBotPlayer(victimSteamID, _config.PointsPerSuicide, deathEvent.Userid, _config.SuicideMessage, "{SUICIDE_POINTS}");
-        }
-        else
-        {
-            if (deathEvent.Attacker != null && deathEvent.Attacker.IsValid && !deathEvent.Attacker.IsBot &&
-                (!deathEvent.Userid.IsBot || _config.AwardPointsForBots))
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
             {
-                playerKills[killerSteamID] = playerKills.TryGetValue(killerSteamID, out var kills) ? kills + 1 : 1;
-
-                int pointsForKill = _config.PointsPerKill;
-                if (deathEvent.Noscope)
+                if (player != null && player.IsValid && !player.IsBot && player.TeamNum != (int)CsTeam.Spectator)
                 {
-                    AddPointsForNonBotPlayer(killerSteamID, _config.PointsPerNoScope, deathEvent.Attacker, _config.NoScopeKillMessage, "{NOSCOPE_POINTS}");
-                }
-
-                AddPointsForNonBotPlayer(killerSteamID, pointsForKill, deathEvent.Attacker, _config.KillMessage, "{KILL_POINTS}");
-
-                if (deathEvent.Headshot)
-                {
-                    AddPointsForNonBotPlayer(killerSteamID, _config.PointsPerHeadshot, deathEvent.Attacker, _config.HeadshotMessage, "{HEADSHOT_POINTS}");
-                }
-            }
-
-            if (deathEvent.Assister != null && deathEvent.Assister.IsValid && !deathEvent.Assister.IsBot)
-            {
-                var assisterSteamID = deathEvent.Assister.SteamID.ToString();
-                AddPointsForNonBotPlayer(assisterSteamID, _config.PointsPerAssist, deathEvent.Assister, _config.AssistMessage, "{ASSIST_POINTS}");
-            }
-
-            if (victimSteamID != null && playerPoints.ContainsKey(victimSteamID) && !deathEvent.Userid.IsBot)
-            {
-                AddPointsForNonBotPlayer(victimSteamID, _config.PointsPerDeath, deathEvent.Userid, _config.DeathMessage, "{DEATH_POINTS}");
-            }
-        }
-
-        SaveStatistics();
-        UpdateTopKillsList();
-        UpdateTopDeathsList();
-        UpdateTopKDRList();
-        SaveTopDeaths();        
-        SaveTopKills();    
-        SaveTopKDR();    
-
-        return HookResult.Continue;
-    }
-    private void AddPointsForNonBotPlayer(string steamID, int pointsToAdd, CCSPlayerController playerController, string messageTemplate, string pointsPlaceholder)
-    {
-        if (playerController != null)
-        {
-            if (playerController.IsBot && !_config.AwardPointsForBots)
-            {
-                return;
-            }
-
-            if (!playerPoints.TryGetValue(steamID, out int currentPoints))
-            {
-                currentPoints = 0;
-            }
-
-            currentPoints = Math.Max(0, currentPoints + pointsToAdd);
-            playerPoints[steamID] = currentPoints;
-
-            CheckAndUpdateRank(steamID, currentPoints);
-
-            SavePlayerPoints();
-            UpdateTopPlayersList();
-
-            string formattedMessage = messageTemplate
-                .Replace("{POINTS}", playerPoints[steamID].ToString())
-                .Replace(pointsPlaceholder, pointsToAdd.ToString());
-            formattedMessage = ReplaceColorPlaceholders(formattedMessage);
-
-            playerController.PrintToChat(formattedMessage);
-        }
-        else
-        {
-
-        }
-    }
-    private void AddPoints(string steamID, int pointsToAdd)
-    {
-        var playerController = FindPlayerBySteamID(steamID);
-
-        if (playerController != null && playerController.IsBot && !_config.AwardPointsForBots)
-        {
-            return; 
-        }
-
-        if (!playerPoints.TryGetValue(steamID, out int currentPoints))
-        {
-            currentPoints = 0;
-        }
-
-        currentPoints = Math.Max(0, currentPoints + pointsToAdd);
-        playerPoints[steamID] = currentPoints;
-
-        CheckAndUpdateRank(steamID, currentPoints);
-
-        SavePlayerPoints();
-        UpdateTopPlayersList();
-    }
-    private void UpdateTopPlayersList()
-    {
-        var updatedTopPlayers = playerPoints
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-        topPlayersList = updatedTopPlayers.Select(kvp => new TopPlayer
-        {
-            SteamID = kvp.Key,
-            Nickname = GetPlayerNickname(kvp.Key), 
-            Points = kvp.Value
-        }).ToList();
-
-        SaveTopPlayers();
-    }
-    private void CheckAndUpdateRank(string steamID, int points)
-    {
-        var currentRank = playerRanks.TryGetValue(steamID, out var rank) ? rank : ranks[0].Name;
-        var newRank = currentRank;
-        var currentRankIndex = ranks.FindIndex(r => r.Name == currentRank);
-        var newRankIndex = currentRankIndex;
-        var rankUp = false;
-
-        for (int i = 0; i < ranks.Count; i++)
-        {
-            if (points >= ranks[i].PointsRequired)
-            {
-                newRankIndex = i;
-            }
-        }
-
-        if (newRankIndex != currentRankIndex)
-        {
-            newRank = ranks[newRankIndex].Name;
-            rankUp = newRankIndex > currentRankIndex;
-
-            if (newRank != null)
-            {
-                playerRanks[steamID] = newRank;
-
-                string messageTemplate = rankUp ? _config.RankUpMessage : _config.RankDownMessage;
-                string message = messageTemplate.Replace("{RANK}", newRank);
-
-                var rankUpdatePlayerController = FindPlayerBySteamID(steamID);
-                if (rankUpdatePlayerController != null)
-                {
-                    rankUpdatePlayerController.PrintToCenter(message);
+                    player.PrintToChat(message);
                 }
             }
         }
-    }
-    private bool IsMaxRank(string rank)
-    {
-        return rank == ranks.LastOrDefault()?.Name;
-    } 
-
-    private bool playerReachedMaxRankBefore(string steamID)
-    {
-        if (playerReachedMaxRank.TryGetValue(steamID, out bool reachedMaxRank))
+        private PluginConfig LoadOrCreateConfig()
         {
-            return reachedMaxRank;
-        }
-
-        return false;
-    }
-
-    private void LoadPlayerPoints()
-    {
-        if (File.Exists(dataFilePath))
-        {
-            var json = File.ReadAllText(dataFilePath);
-            playerPoints = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, int>>(json) ?? new Dictionary<string, int>();
-        }
-    }
-    private void SavePlayerPoints()
-    {
-        var json = (playerPoints.Count > 0) ? JsonConvert.SerializeObject(playerPoints, Formatting.Indented) : "{}";
-
-        try
-        {
-            var directory = Path.GetDirectoryName(dataFilePath) ?? Directory.GetCurrentDirectory();
-            if (!Directory.Exists(directory))
-            {;
-                Directory.CreateDirectory(directory);
-            }
-
-            if (dataFilePath != null)
+            var filePath = Path.Combine(ModuleDirectory, "Config.yml");
+            if (!File.Exists(filePath))
             {
-                File.WriteAllText(dataFilePath, json);
+                var defaultConfig = new PluginConfig();
+                SaveConfig(defaultConfig, filePath);
+                return defaultConfig;
             }
             else
             {
-
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[RankPointsPlugin] Не удалось сохранить очки игроков: {ex.Message}");
-        }
-    }
-
-    private (string NextRankName, int PointsToNextRank) GetNextRankInfo(int currentPoints)
-    {
-        Rank nextRank = new Rank(); 
-        int pointsNeeded = 0;
-
-        foreach (var rank in ranks)
-        {
-            if (currentPoints < rank.PointsRequired)
-            {
-                nextRank = rank;
-                pointsNeeded = rank.PointsRequired - currentPoints;
-                break;
+                var deserializer = new DeserializerBuilder().Build();
+                var yaml = File.ReadAllText(filePath);
+                return deserializer.Deserialize<PluginConfig>(yaml);
             }
         }
 
-        if (nextRank == null)
+        private int GetActivePlayerCount()
         {
-            return ("максимальное звание", 0);
+            return activePlayers.Count;
+        }
+        private HookResult OnWeaponFire(EventWeaponFire fireEvent, GameEventInfo info)
+        {
+            var shooterSteamId64 = fireEvent.Userid.SteamID.ToString();
+            var shooterSteamId = ConvertSteamID64ToSteamID(shooterSteamId64);
+
+            UpdateShoots(shooterSteamId);
+
+            return HookResult.Continue;
         }
 
-        string nextRankName = nextRank.Name ?? "неизвестный ранг";
-
-        return (nextRankName, pointsNeeded);
-    }
-
-    private double CalculateKDRatio(int kills, int deaths)
-    {
-        return deaths > 0 ? (double)kills / deaths : kills;
-    }
-
-    [ConsoleCommand("rank", "Показывает ваше текущее звание и информацию о следующем")]
-    public void OnRankCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null) return;
-
-        var steamID = player.SteamID.ToString();
-        if (!playerPoints.TryGetValue(steamID, out var points))
+        private HookResult OnPlayerHurt(EventPlayerHurt hurtEvent, GameEventInfo info)
         {
-            player.PrintToChat(ReplaceColorPlaceholders(_config.NoRankMessage));
-            return;
-        }
-
-        var sortedPlayers = playerPoints.OrderByDescending(kvp => kvp.Value).ToList();
-        var rankPosition = sortedPlayers.FindIndex(kvp => kvp.Key == steamID) + 1; 
-        var totalPlayers = sortedPlayers.Count;
-        var kills = playerKills.TryGetValue(steamID, out var playerKillsCount) ? playerKillsCount : 0;
-        var deaths = playerDeaths.TryGetValue(steamID, out var playerDeathsCount) ? playerDeathsCount : 0;    
-        var kdRatio = CalculateKDRatio(kills, deaths);    
-        var (nextRankName, pointsToNextRank) = GetNextRankInfo(points);
- 
-        string formattedKDRatio = kdRatio.ToString("0.00");
-
-        var rankName = playerRanks.TryGetValue(steamID, out var rank) ? rank : "Нету";
-
-        string currentRankMessage = ReplaceColorPlaceholders(_config.CurrentRankMessage.Replace("{RANK_NAME}", rankName));
-        player.PrintToChat(currentRankMessage);
-
-        if (pointsToNextRank > 0)
-        {
-            string nextRankMessage = ReplaceColorPlaceholders(_config.NextRankMessage.Replace("{NEXT_RANK_NAME}", nextRankName).Replace("{POINTS_TO_NEXT_RANK}", pointsToNextRank.ToString()));
-            player.PrintToChat(nextRankMessage);
-        }
-        else
-        {
-            string maxRankMessage = ReplaceColorPlaceholders(_config.MaxRankMessage.Replace("{RANK_NAME}", nextRankName));
-            player.PrintToChat(maxRankMessage);
-        }
-
-        string statsMessage = ReplaceColorPlaceholders(_config.StatsMessage.Replace("{POINTS}", points.ToString()).Replace("{RANK_POSITION}", rankPosition.ToString()).Replace("{TOTAL_PLAYERS}", totalPlayers.ToString()).Replace("{KILLS}", kills.ToString()).Replace("{DEATHS}", deaths.ToString()).Replace("{KDRATIO}", formattedKDRatio));
-        player.PrintToChat(statsMessage);
-    }
-
-   
-    [ConsoleCommand("top", "Показывает топ-10 игроков по очкам")]
-    public void OnTopCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            Console.WriteLine("Эту команду может использовать только игрок.");
-            return;
-        }
-
-
-        var topPlayers = playerPoints
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-
-        topPlayersList = topPlayers.Select(kvp => new TopPlayer
-        {
-            SteamID = kvp.Key,
-            Nickname = GetPlayerNickname(kvp.Key),
-            Points = kvp.Value
-        }).ToList();
-
-        SaveTopPlayers();
-
-        string introMessage = ReplaceColorPlaceholders(_config.TopCommandIntroMessage);
-        player.PrintToChat(introMessage);
-
-        for (int i = 0; i < topPlayers.Count; i++)
-        {
-            var topPlayerInfo = topPlayersList[i];
-            string playerMessage = ReplaceColorPlaceholders(
-                _config.TopPlayerMessage.Replace("{POSITION}", (i + 1).ToString())
-                                        .Replace("{NICKNAME}", topPlayerInfo.Nickname)
-                                        .Replace("{POINTS}", topPlayerInfo.Points.ToString()));
-            player.PrintToChat(playerMessage);
-        }
-    }
-    [ConsoleCommand("topkills", "Показывает топ-10 игроков по убийствам")]
-    public void OnTopKillsCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            Console.WriteLine("Эту команду может использовать только игрок.");
-            return;
-        }
-
-        var topKillsPlayers = playerKills
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-        string introMessage = ReplaceColorPlaceholders(_config.TopKillsIntroMessage);
-        player.PrintToChat(introMessage);
-
-        for (int i = 0; i < topKillsPlayers.Count; i++)
-        {
-            var topPlayerInfo = topKillsPlayers[i];
-            string playerMessage = ReplaceColorPlaceholders(
-                _config.TopKillsPlayerMessage.Replace("{POSITION}", (i + 1).ToString())
-                                            .Replace("{NICKNAME}", GetPlayerNickname(topPlayerInfo.Key))
-                                            .Replace("{KILLS}", topPlayerInfo.Value.ToString()));
-            player.PrintToChat(playerMessage);
-        }
-    }
-    [ConsoleCommand("topdeaths", "Показывает топ-10 игроков по смертям")]
-    public void OnTopDeathsCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            Console.WriteLine("Эту команду может использовать только игрок.");
-            return;
-        }
-
-        var topDeathsPlayers = playerDeaths
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(10)
-            .ToList();
-
-        string introMessage = ReplaceColorPlaceholders(_config.TopDeathsIntroMessage);
-        player.PrintToChat(introMessage);
-
-        for (int i = 0; i < topDeathsPlayers.Count; i++)
-        {
-            var topPlayerInfo = topDeathsPlayers[i];
-            string playerMessage = ReplaceColorPlaceholders(
-                _config.TopDeathsPlayerMessage.Replace("{POSITION}", (i + 1).ToString())
-                                            .Replace("{NICKNAME}", GetPlayerNickname(topPlayerInfo.Key))
-                                            .Replace("{DEATHS}", topPlayerInfo.Value.ToString()));
-            player.PrintToChat(playerMessage);
-        }
-    }
-    [ConsoleCommand("topkdr", "Показывает топ-10 игроков по KDR")]
-    public void OnTopKDRCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            Console.WriteLine("Эту команду может использовать только игрок.");
-            return;
-        }
-
-        UpdateTopKDRList(); 
-
-        string introMessage = ReplaceColorPlaceholders(_config.TopKdrIntroMessage);
-        player.PrintToChat(introMessage);
-
-        foreach (var topPlayerKDR in topKDRList.Take(10))
-        {
-            string playerMessage = ReplaceColorPlaceholders(
-                _config.TopKdrPlayerMessage.Replace("{POSITION}", (topKDRList.IndexOf(topPlayerKDR) + 1).ToString())
-                                        .Replace("{NICKNAME}", topPlayerKDR.Nickname)
-                                        .Replace("{KDR}", topPlayerKDR.KDR.ToString("0.00")));
-            player.PrintToChat(playerMessage);
-        }
-    }
-
-    [ConsoleCommand("rp_reloadconfig", "Перезагружает конфигурационный файл Config.yml")]
-    public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            try
+            if (hurtEvent.Attacker != null && IsValidPlayer(hurtEvent.Attacker))
             {
-                var configFilePath = Path.Combine(ModuleDirectory, "Config.yaml");
+                var attackerSteamId64 = hurtEvent.Attacker.SteamID.ToString();
+                var attackerSteamId = ConvertSteamID64ToSteamID(attackerSteamId64);
 
-                _config = LoadOrCreateConfig(configFilePath);
-
-                Console.WriteLine("[RankPointsPlugin] Конфигурация успешно перезагружена.");
+                UpdateHits(attackerSteamId);
             }
-            catch (Exception ex)
+
+            return HookResult.Continue;
+        }
+        private void UpdateShoots(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
             {
-                Console.WriteLine($"[RankPointsPlugin] Ошибка при перезагрузке конфигурации: {ex.Message}");
+                connection.Open();
+                var updateQuery = "UPDATE lvl_base SET shoots = shoots + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
             }
         }
-        else
+
+        private void UpdateHits(string steamId)
         {
-            player.PrintToChat("Эта команда доступна только из консоли сервера.");
-        }
-    }
-
-    [ConsoleCommand("rp_reloadranks", "Перезагружает конфигурационный файл settings_ranks.yaml")]
-    public void ReloadRanksCommand(CCSPlayerController? player, CommandInfo command)
-    {
-        if (player == null)
-        {
-            try
+            using (var connection = new MySqlConnection(ConnectionString))
             {
-                var ranksFilePath = Path.Combine(ModuleDirectory, "settings_ranks.yaml");
-
-                LoadRanks(ranksFilePath);
-
-                Console.WriteLine("[RankPointsPlugin] Конфигурация рангов успешно перезагружена.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[RankPointsPlugin] Ошибка при перезагрузке конфигурации рангов: {ex.Message}");
+                connection.Open();
+                var updateQuery = "UPDATE lvl_base SET hits = hits + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
             }
         }
-        else
-        {
-            player.PrintToChat("{Red}Эта команда доступна только из консоли сервера.");
-        }
-    }
-    private void LoadRanks(string ranksFilePath)
-    {
-        if (!File.Exists(ranksFilePath))
-        {
-            ranks = new List<Rank>();
-            return;
-        }
 
-        var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
-            .Build();
 
-        var yaml = File.ReadAllText(ranksFilePath);
-
-        ranks = deserializer.Deserialize<List<Rank>>(yaml);
-    }
-    private void SaveTopPlayers()
-    {
-        string json = JsonConvert.SerializeObject(topPlayersList, Formatting.Indented);
-        if (topPlayersFilePath != null)
+        private HookResult OnPlayerDisconnect(EventPlayerDisconnect disconnectEvent, GameEventInfo info)
         {
-            File.WriteAllText(topPlayersFilePath, json);
-        }
-        else
-        {
-
-        }
-    }    
-
-    private CCSPlayerController? FindPlayerBySteamID(string steamID)
-    {
-        var playerEntities = Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
-        foreach (var player in playerEntities)
-        {
-            if (player.SteamID.ToString() == steamID)
+            if (disconnectEvent?.Userid != null && !disconnectEvent.Userid.IsBot)
             {
-                return player;
-            }
-        }
-        return null;
-    }
+                var steamId64 = disconnectEvent.Userid.SteamID.ToString();
+                var steamId = ConvertSteamID64ToSteamID(steamId64);  
 
-    private string GetPlayerNickname(string steamID)
-    {
-        var player = FindPlayerBySteamID(steamID);
+                var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        if (player != null)
-        {
-            var topPlayer = topPlayersList?.FirstOrDefault(p => p.SteamID == steamID);
-            if (topPlayer != null)
-            {
-                topPlayer.Nickname = player.PlayerName;
-            }
-            return player.PlayerName;
-        }
-
-        var savedTopPlayer = topPlayersList?.FirstOrDefault(p => p.SteamID == steamID);
-        
-        if (savedTopPlayer != null)
-        {
-            return savedTopPlayer.Nickname ?? string.Empty;
-        }
-
-        return "Игрок не найден";
-    }
-    private string ReplaceColorPlaceholders(string message)
-    {
-        if (message.Contains('{'))
-        {
-            string modifiedValue = message;
-            foreach (FieldInfo field in typeof(ChatColors).GetFields())
-            {
-                string pattern = $"{{{field.Name}}}";
-                if (message.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
-                    modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null).ToString(), StringComparison.OrdinalIgnoreCase);
+                    connection.Open();
+
+                    var playerData = connection.QueryFirstOrDefault("SELECT lastconnect, playtime FROM lvl_base WHERE steam = @SteamID", new { SteamID = steamId });
+
+                    if (playerData != null)
+                    {
+                        var sessionTime = currentTime - playerData.lastconnect;
+                        var newPlaytime = playerData.playtime + sessionTime;
+
+                        var updateQuery = "UPDATE lvl_base SET playtime = @Playtime WHERE steam = @SteamID;";
+                        connection.Execute(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
+                    }
                 }
             }
-            return modifiedValue;
+            if (disconnectEvent?.Userid != null && !disconnectEvent.Userid.IsBot)
+            {
+                var steamId64 = disconnectEvent.Userid.SteamID.ToString();
+                var steamId = ConvertSteamID64ToSteamID(steamId64);
+                activePlayers.Remove(steamId);
+
+                foreach (var player in activePlayers)
+                {
+                    Console.WriteLine("Remaining active player: " + player);
+                }
+            }
+
+            return HookResult.Continue;
+        }
+        private HookResult OnRoundEnd(EventRoundEnd roundEndEvent, GameEventInfo info)
+        {
+            if (GetActivePlayerCount() < config.MinPlayersForExperience)
+            {
+                return HookResult.Continue;
+            }
+
+            CsTeam winnerTeam = (CsTeam)roundEndEvent.Winner;
+
+            for (int playerIndex = 0; playerIndex <= Server.MaxPlayers; playerIndex++) 
+            {
+                CCSPlayerController playerController = Utilities.GetPlayerFromUserid(playerIndex);
+
+                if (playerController != null && playerController.IsValid && !playerController.IsBot && playerController.TeamNum != (int)CsTeam.Spectator)
+                {
+                    CsTeam playerTeam = (CsTeam)playerController.TeamNum;
+                    var steamID = playerController.SteamID.ToString();
+                    var steamId = ConvertSteamID64ToSteamID(steamID);
+
+                    if (playerTeam == winnerTeam)
+                    {
+                        if (config.PointsPerRoundWin != 0)
+                        {                          
+                            string RoundWinMessageColor = ReplaceColorPlaceholders(config.RoundWinMessageColor);   
+                            AddOrRemovePoints(steamId, config.PointsPerRoundWin, playerController, config.RoundWinMessage, RoundWinMessageColor);
+                        }
+                        UpdateRoundResult(steamId, true);
+                    }
+                    else
+                    {
+                        if (config.PointsPerRoundLoss != 0)
+                        {                            
+                            string RoundLossMessageColor = ReplaceColorPlaceholders(config.RoundLossMessageColor);    
+                            AddOrRemovePoints(steamId, config.PointsPerRoundLoss, playerController, config.RoundLossMessage, RoundLossMessageColor);
+                        }
+                        UpdateRoundResult(steamId, false); 
+                    }
+                }
+            }
+
+            return HookResult.Continue;
+        }
+        private HookResult OnPlayerMVP(EventRoundMvp mvpEvent, GameEventInfo info)
+        {
+            if (GetActivePlayerCount() < config.MinPlayersForExperience)
+            {
+                return HookResult.Continue;
+            }       
+            var mvpPlayerSteamId64 = mvpEvent.Userid.SteamID.ToString();
+            var mvpPlayerSteamId = ConvertSteamID64ToSteamID(mvpPlayerSteamId64);
+
+            if (config.PointsPerMVP != 0)
+            {
+                string MVPMessageColor = ReplaceColorPlaceholders(config.MVPMessageColor);  
+                AddOrRemovePoints(mvpPlayerSteamId, config.PointsPerMVP, mvpEvent.Userid, config.MVPMessage, MVPMessageColor);
+            }
+
+            return HookResult.Continue;
+        }
+        private void UpdateRoundResult(string steamId, bool isWin)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                string columnToUpdate = isWin ? "round_win" : "round_lose";
+                var updateQuery = $"UPDATE lvl_base SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
+            }
+        }
+        private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
+        {
+            if (GetActivePlayerCount() < config.MinPlayersForExperience)
+            {
+                return HookResult.Continue;
+            }
+            try
+            {
+                var victimSteamId64 = deathEvent.Userid.SteamID.ToString();
+                var victimSteamId = ConvertSteamID64ToSteamID(victimSteamId64);
+
+                if (deathEvent.Attacker != null && deathEvent.Attacker == deathEvent.Userid)
+                {
+                    if (config.PointsForSuicide != 0)
+                    {
+                        string suicideMessageColor = ReplaceColorPlaceholders(config.SuicideMessageColor);
+                        AddOrRemovePoints(victimSteamId, config.PointsForSuicide, deathEvent.Userid, config.SuicideMessage, suicideMessageColor);
+                    }
+                }
+                else
+                {
+                    if (config.PointsForDeath != 0)
+                    {
+                        string DeathMessageColor = ReplaceColorPlaceholders(config.DeathMessageColor);            
+                        AddOrRemovePoints(victimSteamId, config.PointsForDeath, deathEvent.Userid, config.DeathMessage, DeathMessageColor);
+                    }
+                    UpdateKillsOrDeaths(victimSteamId, false);
+
+                    if (deathEvent.Attacker != null && IsValidPlayer(deathEvent.Attacker))
+                    {
+                        var killerSteamId64 = deathEvent.Attacker.SteamID.ToString();
+                        var killerSteamId = ConvertSteamID64ToSteamID(killerSteamId64);
+
+                        if (config.PointsForKill != 0)
+                        {
+                            string KillMessageColor = ReplaceColorPlaceholders(config.KillMessageColor);                                   
+                            AddOrRemovePoints(killerSteamId, config.PointsForKill, deathEvent.Attacker, config.KillMessage, KillMessageColor);
+                        }
+                        UpdateKillsOrDeaths(killerSteamId, true);
+
+                        if (deathEvent.Weapon == "awp" && deathEvent.Noscope && config.PointsForNoScopeAWP != 0);
+                        {
+                            string NoScopeAWPMessageColor = ReplaceColorPlaceholders(config.NoScopeAWPMessageColor);   
+                            AddOrRemovePoints(killerSteamId, config.PointsForNoScopeAWP, deathEvent.Attacker, config.NoScopeAWPMessage, NoScopeAWPMessageColor);
+                        }
+                        if (deathEvent.Headshot && config.PointsForHeadshot != 0)
+                        {
+                            string HeadshotMessageColor = ReplaceColorPlaceholders(config.HeadshotMessageColor);  
+                            AddOrRemovePoints(killerSteamId, config.PointsForHeadshot, deathEvent.Attacker, config.HeadshotMessage, HeadshotMessageColor);
+                            UpdateHeadshots(killerSteamId);
+                        }  
+                    }
+                    if (deathEvent.Assister != null && IsValidPlayer(deathEvent.Assister) && config.PointsForAssist != 0)
+                    {
+                        var assisterSteamId64 = deathEvent.Assister.SteamID.ToString();
+                        var assisterSteamId = ConvertSteamID64ToSteamID(assisterSteamId64);
+
+                        string AssistMessageColor = ReplaceColorPlaceholders(config.AssistMessageColor);  
+                        AddOrRemovePoints(assisterSteamId, config.PointsForAssist, deathEvent.Assister, config.AssistMessage, AssistMessageColor);
+                        UpdateAssists(assisterSteamId);
+                    }                                      
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnPlayerDeath: " + ex.Message);
+            }
+            return HookResult.Continue;
+        }
+        private bool IsValidPlayer(CCSPlayerController player)
+        {
+            return player != null && player.IsValid && !player.IsBot;
+        }        
+
+        private void UpdateHeadshots(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var updateQuery = "UPDATE lvl_base SET headshots = headshots + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
+            }
         }
 
-        return message;
+        private void UpdateAssists(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                var updateQuery = "UPDATE lvl_base SET assists = assists + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
+            }
+        }
+
+        private void UpdateKillsOrDeaths(string steamId, bool isKill)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                string columnToUpdate = isKill ? "kills" : "deaths";
+                var updateQuery = $"UPDATE lvl_base SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                connection.Execute(updateQuery, new { SteamID = steamId });
+            }
+        }
+       private int AddOrRemovePoints(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
+        {
+            int updatedPoints = 0;
+
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var transaction = connection.BeginTransaction();
+
+                try
+                {
+                    var currentPointsQuery = "SELECT value FROM lvl_base WHERE steam = @SteamID;";
+                    var currentPoints = connection.ExecuteScalar<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+
+                    updatedPoints = currentPoints + points;
+
+                    if (updatedPoints < 0)
+                    {
+                        updatedPoints = 0; 
+                    }
+
+                    var updateQuery = "UPDATE lvl_base SET value = @NewPoints WHERE steam = @SteamID;";
+                    connection.Execute(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+
+                    transaction.Commit();
+
+                    string sign = points >= 0 ? "+" : "-";
+                    string rawMessage = config.PointsChangeMessage
+                        .Replace("{COLOR}", messageColor)
+                        .Replace("{POINTS}", updatedPoints.ToString())
+                        .Replace("{SIGN}", sign)
+                        .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
+                        .Replace("{REASON}", reason);
+
+                    string formattedMessage = ReplaceColorPlaceholders(rawMessage);
+
+                    if (playerController != null && playerController.IsValid && !playerController.IsBot)
+                    {
+                        playerController.PrintToChat(formattedMessage);
+                    }
+                    
+                    CheckAndUpdateRank(steamId, updatedPoints);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    Console.WriteLine("Exception in AddOrRemovePoints: " + ex.Message);
+                }
+            }
+
+            return updatedPoints;
+        }
+
+
+        private bool CheckAndUpdateRank(string steamId, int updatedPoints)
+        {
+
+            var ranksConfig = LoadRanksConfig();
+            var newRankIndex = 0;
+
+            for (int i = 0; i < ranksConfig.Count; i++)
+            {
+                if (updatedPoints >= ranksConfig[i].MinExperience)
+                {
+                    newRankIndex = i;
+               }
+            }
+
+            var newRank = ranksConfig[newRankIndex];
+
+            if (newRank != null)
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var currentRankQuery = "SELECT rank FROM lvl_base WHERE steam = @SteamID;";
+                    var currentRankId = connection.ExecuteScalar<int>(currentRankQuery, new { SteamID = steamId });
+
+                    if (currentRankId != newRank.Id)
+                    {
+                        var updateRankQuery = "UPDATE lvl_base SET rank = @NewRankId WHERE steam = @SteamID;";
+                        connection.Execute(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
+
+                        bool isRankUp = newRank.Id > currentRankId;
+                        NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
+        {
+            string steamId64 = ConvertSteamIDToSteamID64(steamId);
+            string message = isRankUp ? config.RankUpMessage.Replace("{RANK_NAME}", newRankName) 
+                                    : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
+
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            {
+                if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamId64)
+                {
+                    player.PrintToCenter(message);
+                    break;
+                }
+            }
+        }
+        private string ConvertSteamIDToSteamID64(string steamID)
+        {
+            if (string.IsNullOrEmpty(steamID) || !steamID.StartsWith("STEAM_"))
+            {
+                return null;
+            }
+
+            try
+            {
+                string[] split = steamID.Replace("STEAM_", "").Split(':');
+                long steamID64 = 76561197960265728 + Convert.ToInt64(split[2]) * 2 + Convert.ToInt64(split[1]);
+                return steamID64.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ConvertSteamIDToSteamID64] Ошибка при конвертации SteamID: {ex.Message}");
+                return null;
+            }
+        }
+        private RankConfig? GetCurrentRank(string steamID64)
+        {
+            var steamID = ConvertSteamID64ToSteamID(steamID64);
+            if (steamID == null)
+            {
+                Console.WriteLine("Invalid SteamID64 format.");
+                return null;
+            }
+
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var query = "SELECT rank FROM lvl_base WHERE steam = @SteamID;";
+                var rankId = connection.QueryFirstOrDefault<int>(query, new { SteamID = steamID });
+
+                if (rankId == 0)
+                {
+                    return new RankConfig { Id = 1, Name = "Нету", MinExperience = 0 };
+                }
+
+                var ranksConfig = LoadRanksConfig();
+                return ranksConfig.FirstOrDefault(r => r.Id == rankId);
+            }
+        }
+
+
+
+        private string GetPlayerNickname(string steamID)
+        {
+            var player = FindPlayerBySteamID(steamID);
+            if (player != null)
+            {
+                return player.PlayerName;
+            }
+            return "Unkown";
+        }
+
+        private CCSPlayerController FindPlayerBySteamID(string steamID)
+        {
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            {
+                if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamID)
+                {
+                    return player;
+                }
+            }
+            return null;
+        }
+
+
+        private void CreateDbConfigIfNotExists()
+        {
+            string configFilePath = Path.Combine(ModuleDirectory, DbConfigFileName);
+            if (!File.Exists(configFilePath))
+            {
+                var config = new DatabaseConfig
+                {
+                    DbHost = "YourHost",
+                    DbUser = "YourUser",
+                    DbPassword = "YourPassword",
+                    DbName = "YourDatabase"
+                };
+
+                string jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(configFilePath, jsonConfig);
+                Console.WriteLine("Database configuration file created.");
+            }
+        }
+        private string ReplaceColorPlaceholders(string message)
+        {
+            if (message.Contains('{'))
+            {
+                string modifiedValue = message;
+                foreach (FieldInfo field in typeof(ChatColors).GetFields())
+                {
+                    string pattern = $"{{{field.Name}}}";
+                    if (message.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                    {
+                        modifiedValue = modifiedValue.Replace(pattern, field.GetValue(null).ToString(), StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+                return modifiedValue;
+            }
+
+            return message;
+        }
+
+        private PlayerStats GetPlayerStats(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var playerData = connection.QueryFirstOrDefault(@"
+                    SELECT p.rank, p.value as points, p.kills, p.deaths, p.playtime,
+                        (SELECT COUNT(*) FROM lvl_base WHERE value > p.value) + 1 as place,
+                        (SELECT COUNT(*) FROM lvl_base) as totalPlayers
+                    FROM lvl_base p
+                    WHERE p.steam = @SteamID;", new { SteamID = steamId });
+
+
+                if (playerData == null)
+                {
+                    throw new InvalidOperationException("Player data not found for the given SteamID.");
+                }
+
+                var ranksConfig = LoadRanksConfig();
+                var rankConfig = ranksConfig.FirstOrDefault(r => r.Id == Convert.ToInt32(playerData.rank));
+                if (rankConfig == null)
+                {
+                    throw new InvalidOperationException("Rank configuration not found for the given rank ID.");
+                }
+
+                var kdr = (playerData.deaths > 0) ? (double)playerData.kills / playerData.deaths : playerData.kills;
+                
+                int place = Convert.ToInt32(playerData.place);
+                int totalPlayers = Convert.ToInt32(playerData.totalPlayers);
+
+                return new PlayerStats
+                {
+                    RankName = rankConfig.Name,
+                    Place = place,
+                    TotalPlayers = totalPlayers,
+                    Points = Convert.ToInt32(playerData.points),
+                    Kills = playerData.kills,
+                    PlayTime = playerData.playtime,
+                    Deaths = playerData.deaths,
+                    KDR = kdr
+                };
+            }
+        }
+        public class PlayerResetInfo
+        {
+            public DateTime LastResetTime { get; set; }
+        }        
+        public class PlayerStats
+        {
+            public string RankName { get; set; }
+            public int Place { get; set; }
+            public int TotalPlayers { get; set; }
+            public int Points { get; set; }
+            public int Kills { get; set; }
+            public int PlayTime { get; set; }
+            public int Deaths { get; set; }
+            public double KDR { get; set; }
+        }
+
+        private string FormatTime(int playTimeSeconds)
+        {
+            TimeSpan timePlayed = TimeSpan.FromSeconds(playTimeSeconds);
+            return string.Format(config.TimeFormat, timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
+        }
+
+        [ConsoleCommand("rank", "Показывает ваше текущее звание и статистику")]
+        public void OnRankCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null) return;
+
+            var steamID64 = player.SteamID.ToString();
+            var steamID = ConvertSteamID64ToSteamID(steamID64); 
+            var stats = GetPlayerStats(steamID); 
+
+            string message = config.RankCommandMessage
+                .Replace("{RANK_NAME}", stats.RankName)
+                .Replace("{PLACE}", stats.Place.ToString())
+                .Replace("{TOTAL_PLAYERS}", stats.TotalPlayers.ToString())
+                .Replace("{POINTS}", stats.Points.ToString())
+                .Replace("{KILLS}", stats.Kills.ToString())
+                .Replace("{DEATHS}", stats.Deaths.ToString())
+                .Replace("{KDR}", stats.KDR.ToString("F2"))
+                .Replace("{PLAY_TIME}", FormatTime(stats.PlayTime));
+
+            message = ReplaceColorPlaceholders(message);
+            player.PrintToChat(message);
+        }
+        [ConsoleCommand("top", "Показывает топ-10 игроков по очкам")]
+        public void OnTopCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, value
+                        FROM lvl_base
+                        ORDER BY value DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = config.TopCommandPlayerMessage
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{POINTS}", topPlayerInfo.value.ToString());
+                            playerMessage = ReplaceColorPlaceholders(playerMessage);
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        string noDataMessage = ReplaceColorPlaceholders(config.TopCommandNoDataMessage);
+                        player.PrintToChat(noDataMessage);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnTopCommand: " + ex.Message);
+                string errorMessage = ReplaceColorPlaceholders(config.TopCommandErrorMessage);
+                player.PrintToChat(errorMessage);
+            }
+        }
+        [ConsoleCommand("topkills", "Показывает топ-10 игроков по убийствам")]
+        public void OnTopKillsCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, kills
+                        FROM lvl_base
+                        ORDER BY kills DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopKillsCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = ReplaceColorPlaceholders(config.TopKillsCommandPlayerMessage)
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{KILLS}", topPlayerInfo.kills.ToString());
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandNoDataMessage));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnTopKillsCommand: " + ex.Message);
+                player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandErrorMessage));
+            }
+        }
+
+        [ConsoleCommand("topdeaths", "Показывает топ-10 игроков по смертям")]
+        public void OnTopDeathsCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, deaths
+                        FROM lvl_base
+                        ORDER BY deaths DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopDeathsCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = ReplaceColorPlaceholders(config.TopDeathsCommandPlayerMessage)
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{DEATHS}", topPlayerInfo.deaths.ToString());
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandNoDataMessage));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnTopDeathsCommand: " + ex.Message);
+                player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandErrorMessage));
+            }
+        }
+
+        [ConsoleCommand("topkdr", "Показывает топ-10 игроков по KDR")]
+        public void OnTopKDRCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
+                        FROM lvl_base
+                        ORDER BY kdr DESC, kills DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopKDRCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        foreach (var topPlayerInfo in topPlayers)
+                        {
+                            string formattedKDR = topPlayerInfo.kdr.ToString("F2");
+                            string playerMessage = config.TopKDRCommandPlayerMessage
+                                .Replace("{INDEX}", (topPlayers.IndexOf(topPlayerInfo) + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{KDR}", formattedKDR);
+                            player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandNoDataMessage));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnTopKDRCommand: " + ex.Message);
+                player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandErrorMessage));
+            }
+        }
+
+        [ConsoleCommand("toptime", "Показывает топ-10 игроков по времени на сервере")]
+        public void OnTopTimeCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, playtime
+                        FROM lvl_base
+                        ORDER BY playtime DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopTimeCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            TimeSpan timePlayed = TimeSpan.FromSeconds(topPlayerInfo.playtime);
+                            string formattedTime = string.Format(config.TopTimeFormat,
+                                timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
+                            string playerMessage = config.TopTimeCommandPlayerMessage
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{TIME}", formattedTime);
+                            player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandNoDataMessage));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnTopTimeCommand: " + ex.Message);
+                player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandErrorMessage));
+            }
+        }
+
+        [ConsoleCommand("resetstats", "Сбросить свою статистику (можно использовать раз в 3 часа)")]
+        public void OnResetStatsCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null) return;
+
+            var steamId64 = player.SteamID.ToString();
+            var steamId = ConvertSteamID64ToSteamID(steamId64);
+
+            if (playerResetTimes.TryGetValue(steamId, out var resetInfo))
+            {
+                if ((DateTime.UtcNow - resetInfo.LastResetTime).TotalHours < config.ResetStatsCooldownHours)
+                {
+                    string cooldownMessage = ReplaceColorPlaceholders(config.ResetStatsCooldownMessage);
+                    player.PrintToChat(cooldownMessage);
+                    return;
+                }
+            }
+
+            ResetPlayerStats(steamId);
+            playerResetTimes[steamId] = new PlayerResetInfo { LastResetTime = DateTime.UtcNow };
+            
+            string successMessage = ReplaceColorPlaceholders(config.ResetStatsSuccessMessage);
+            player.PrintToChat(successMessage);
+        }
+
+        private void ResetPlayerStats(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
+                connection.Execute(resetQuery, new { SteamID = steamId });
+            }
+        }
+
+        [ConsoleCommand("rp_reloadconfig", "Перезагружает конфигурационный файл Config.yml")]
+        public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                try
+                {
+                    config = LoadOrCreateConfig();
+
+                    Console.WriteLine("[RankPointsPlugin] Конфигурация успешно перезагружена.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RankPointsPlugin] Ошибка при перезагрузке конфигурации: {ex.Message}");
+                }
+            }
+            else
+            {
+                player.PrintToChat("Эта команда доступна только из консоли сервера.");
+            }
+        }
+
+        [ConsoleCommand("rp_reloadranks", "Перезагружает конфигурационный файл settings_ranks.yaml")]
+        public void ReloadRanksCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                try
+                {
+                    LoadRanksConfig();
+
+                    Console.WriteLine("[RankPointsPlugin] Конфигурация рангов успешно перезагружена.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RankPointsPlugin] Ошибка при перезагрузке конфигурации рангов: {ex.Message}");
+                }
+            }
+            else
+            {
+                player.PrintToChat("{Red}Эта команда доступна только из консоли сервера.");
+            }
+        }
+
+        [ConsoleCommand("ranks", "Показывает список всех званий и опыта, необходимого для их получения")]
+        public void OnRanksCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            try
+            {
+                var ranksConfig = LoadRanksConfig();
+
+                if (ranksConfig.Any())
+                {
+                    string introMessage = ReplaceColorPlaceholders(config.RanksCommandIntroMessage);
+                    player.PrintToChat(introMessage);
+
+                    foreach (var rank in ranksConfig)
+                    {
+                        string rankMessage = config.RanksCommandRankMessage
+                            .Replace("{NAME}", rank.Name)
+                            .Replace("{EXPERIENCE}", rank.MinExperience.ToString());
+                        rankMessage = ReplaceColorPlaceholders(rankMessage);
+                        player.PrintToChat(rankMessage);
+                    }
+                }
+                else
+                {
+                    string noDataMessage = ReplaceColorPlaceholders(config.RanksCommandNoDataMessage);
+                    player.PrintToChat(noDataMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception in OnRanksCommand: " + ex.Message);
+                string errorMessage = ReplaceColorPlaceholders(config.RanksCommandErrorMessage);
+                player.PrintToChat(errorMessage);
+            }
+        }
+     
+        [ConsoleCommand("lvl", "Показывает список всех доступных команд и их функций")]
+        public void OnLvlCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                Console.WriteLine("Эту команду может использовать только игрок.");
+                return;
+            }
+
+            string introMessage = ReplaceColorPlaceholders(config.LvlCommandIntroMessage);
+            player.PrintToChat(introMessage);
+
+            string[] commandDescriptions = new string[]
+            {
+                ReplaceColorPlaceholders(config.RankCommandDescription),
+                ReplaceColorPlaceholders(config.TopCommandDescription),
+                ReplaceColorPlaceholders(config.TopKillsCommandDescription),
+                ReplaceColorPlaceholders(config.TopDeathsCommandDescription),
+                ReplaceColorPlaceholders(config.TopKDRCommandDescription),
+                ReplaceColorPlaceholders(config.TopTimeCommandDescription),
+                ReplaceColorPlaceholders(config.ResetStatsCommandDescription),
+                ReplaceColorPlaceholders(config.RanksCommandDescription)
+            };
+
+            foreach (var description in commandDescriptions)
+            {
+                player.PrintToChat(description);
+            }
+        }
+
+
+        [ConsoleCommand("rp_resetranks", "Очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type>")]
+        [CommandHelper(minArgs: 2, usage: "<steamid64> <data-type>", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+        public void ResetRanksCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null || player.IsBot) 
+            {
+                try
+                {
+                    var steamId64 = command.ArgByIndex(1);
+                    var steamId = ConvertSteamID64ToSteamID(steamId64);
+                    var dataType = command.ArgByIndex(2).ToLower();
+
+                    if (steamId == null)
+                    {
+                        Console.WriteLine("Некорректный SteamID64.");
+                        return;
+                    }
+
+                    switch (dataType)
+                    {
+                        case "exp":
+                            ResetPlayerExperience(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Опыт и ранг игрока {steamId} (SteamID64: {steamId64}) были сброшены.");
+                            break;
+                        case "stats":
+                            ResetPlayerStats(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Статистика игрока {steamId} (SteamID64: {steamId64}) была сброшена.");
+                            break;
+                        case "time":
+                            ResetPlayerPlaytime(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Время игры игрока {steamId} (SteamID64: {steamId64}) было сброшено.");
+                            break;
+                        default:
+                            Console.WriteLine("Неверный тип данных. Используйте 'exp', 'stats' или 'time'.");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RankPointsPlugin] Произошла ошибка при сбросе статистики: {ex.Message}");
+                }
+            }
+            else
+            {
+                player.PrintToChat($"{ChatColors.Red}Эта команда доступна только из консоли сервера.");
+            }
+        }
+
+        private void ResetPlayerExperience(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var resetQuery = "UPDATE lvl_base SET value = 0, rank = 1 WHERE steam = @SteamID;";
+                connection.Execute(resetQuery, new { SteamID = steamId });
+            }
+        }
+
+        private void ResetPlayerStats2(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
+                connection.Execute(resetQuery, new { SteamID = steamId });
+            }
+        }
+
+        private void ResetPlayerPlaytime(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+                var resetQuery = "UPDATE lvl_base SET playtime = 0 WHERE steam = @SteamID;";
+                connection.Execute(resetQuery, new { SteamID = steamId });
+            }
+        }
+        private void CreateTable()
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
+
+                var createTableQuery = string.Format(SQL_CreateTable, "lvl_base", "", "");
+                connection.Execute(createTableQuery);
+            }
+        }
+
+        private string ConnectionString
+        {
+            get
+            {
+                if (dbConfig?.DbHost == null || dbConfig?.DbUser == null || dbConfig?.DbPassword == null || dbConfig?.DbName == null)
+                    throw new InvalidOperationException("Database configuration is not properly set.");
+                
+                return $"Server={dbConfig.DbHost};User ID={dbConfig.DbUser};Password={dbConfig.DbPassword};Database={dbConfig.DbName};";
+            }
+        }
+
+        private const string SQL_CreateTable = "CREATE TABLE IF NOT EXISTS `{0}` ( `steam` varchar(22){1} PRIMARY KEY, `name` varchar(32){2}, `value` int NOT NULL DEFAULT 0, `rank` int NOT NULL DEFAULT 0, `kills` int NOT NULL DEFAULT 0, `deaths` int NOT NULL DEFAULT 0, `shoots` int NOT NULL DEFAULT 0, `hits` int NOT NULL DEFAULT 0, `headshots` int NOT NULL DEFAULT 0, `assists` int NOT NULL DEFAULT 0, `round_win` int NOT NULL DEFAULT 0, `round_lose` int NOT NULL DEFAULT 0, `playtime` int NOT NULL DEFAULT 0, `lastconnect` int NOT NULL DEFAULT 0);";
+        public override string ModuleAuthor => PluginAuthor;
+        public override string ModuleName => PluginName;
+        public override string ModuleVersion => PluginVersion;
     }
 
+    public class DatabaseConfig
+    {
+        public string? DbHost { get; set; }
+        public string? DbUser { get; set; }
+        public string? DbPassword { get; set; }
+        public string? DbName { get; set; }
+
+        public static DatabaseConfig ReadFromJsonFile(string filePath)
+        {
+            string jsonConfig = File.ReadAllText(filePath);
+            return JsonSerializer.Deserialize<DatabaseConfig>(jsonConfig) ?? new DatabaseConfig();
+        }
+    }
 }
