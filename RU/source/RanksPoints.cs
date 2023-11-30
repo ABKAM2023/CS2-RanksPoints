@@ -261,24 +261,24 @@ namespace RanksPointsNamespace
             {
                 var defaultRanks = new List<RankConfig>
                 {
-                    new RankConfig { Id = 1, Name = "Серебро - I", MinExperience = 0 },
-                    new RankConfig { Id = 2, Name = "Серебро - II", MinExperience = 10 },
-                    new RankConfig { Id = 3, Name = "Серебро - III", MinExperience = 25 },
-                    new RankConfig { Id = 4, Name = "Серебро - IV", MinExperience = 50 },
-                    new RankConfig { Id = 5, Name = "Серебро Элита", MinExperience = 75 },
-                    new RankConfig { Id = 6, Name = "Серебро - Великий Магистр", MinExperience = 100 },
-                    new RankConfig { Id = 7, Name = "Золотая Звезда - I", MinExperience = 150 },
-                    new RankConfig { Id = 8, Name = "Золотая Звезда - II", MinExperience = 200 },
-                    new RankConfig { Id = 9, Name = "Золотая Звезда - III", MinExperience = 300 },
-                    new RankConfig { Id = 10, Name = "Золотая Звезда - Магистр", MinExperience = 500 },                                                                                                                                            
-                    new RankConfig { Id = 11, Name = "Магистр-хранитель - I", MinExperience = 750 },  
-                    new RankConfig { Id = 12, Name = "Магистр-хранитель - II", MinExperience = 1000 },  
-                    new RankConfig { Id = 13, Name = "Магистр-хранитель - Элита", MinExperience = 1500 },  
-                    new RankConfig { Id = 14, Name = "Заслуженный Магистр-хранитель", MinExperience = 2000 },  
-                    new RankConfig { Id = 15, Name = "Легендарный Беркут", MinExperience = 3000 },  
-                    new RankConfig { Id = 16, Name = "Легендарный Беркут-магистр", MinExperience = 5000 },
-                    new RankConfig { Id = 17, Name = "Великий Магистр - Высшего Ранга", MinExperience = 7500 },
-                    new RankConfig { Id = 18, Name = "Всемирная Элита", MinExperience = 10000 },  
+                    new RankConfig { Id = 0, Name = "Серебро - I", MinExperience = 0 },
+                    new RankConfig { Id = 1, Name = "Серебро - II", MinExperience = 10 },
+                    new RankConfig { Id = 2, Name = "Серебро - III", MinExperience = 25 },
+                    new RankConfig { Id = 3, Name = "Серебро - IV", MinExperience = 50 },
+                    new RankConfig { Id = 4, Name = "Серебро Элита", MinExperience = 75 },
+                    new RankConfig { Id = 5, Name = "Серебро - Великий Магистр", MinExperience = 100 },
+                    new RankConfig { Id = 6, Name = "Золотая Звезда - I", MinExperience = 150 },
+                    new RankConfig { Id = 7, Name = "Золотая Звезда - II", MinExperience = 200 },
+                    new RankConfig { Id = 8, Name = "Золотая Звезда - III", MinExperience = 300 },
+                    new RankConfig { Id = 9, Name = "Золотая Звезда - Магистр", MinExperience = 500 },                                                                                                                                            
+                    new RankConfig { Id = 10, Name = "Магистр-хранитель - I", MinExperience = 750 },  
+                    new RankConfig { Id = 11, Name = "Магистр-хранитель - II", MinExperience = 1000 },  
+                    new RankConfig { Id = 12, Name = "Магистр-хранитель - Элита", MinExperience = 1500 },  
+                    new RankConfig { Id = 13, Name = "Заслуженный Магистр-хранитель", MinExperience = 2000 },  
+                    new RankConfig { Id = 14, Name = "Легендарный Беркут", MinExperience = 3000 },  
+                    new RankConfig { Id = 15, Name = "Легендарный Беркут-магистр", MinExperience = 5000 },
+                    new RankConfig { Id = 16, Name = "Великий Магистр - Высшего Ранга", MinExperience = 7500 },
+                    new RankConfig { Id = 17, Name = "Всемирная Элита", MinExperience = 10000 },  
                 };
 
                 var serializer = new SerializerBuilder()
@@ -834,24 +834,20 @@ namespace RanksPointsNamespace
                 return null;
             }
 
+            var ranksConfig = LoadRanksConfig();
+
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
                 var query = "SELECT rank FROM lvl_base WHERE steam = @SteamID;";
                 var rankId = connection.QueryFirstOrDefault<int>(query, new { SteamID = steamID });
 
-                if (rankId == 0)
-                {
-                    return new RankConfig { Id = 1, Name = "Серебро - I", MinExperience = 0 };
-                }
+                RankConfig? defaultRank = ranksConfig.FirstOrDefault(r => r.Id == 0);
+                RankConfig? currentRank = ranksConfig.FirstOrDefault(r => r.Id == rankId);
 
-                var ranksConfig = LoadRanksConfig();
-                return ranksConfig.FirstOrDefault(r => r.Id == rankId);
+                return currentRank ?? defaultRank;
             }
         }
-
-
-
         private string GetPlayerNickname(string steamID)
         {
             var player = FindPlayerBySteamID(steamID);
@@ -885,7 +881,8 @@ namespace RanksPointsNamespace
                     DbHost = "YourHost",
                     DbUser = "YourUser",
                     DbPassword = "YourPassword",
-                    DbName = "YourDatabase"
+                    DbName = "YourDatabase",
+                    DbPort = "3306" 
                 };
 
                 string jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
@@ -1497,12 +1494,13 @@ namespace RanksPointsNamespace
         {
             get
             {
-                if (dbConfig?.DbHost == null || dbConfig?.DbUser == null || dbConfig?.DbPassword == null || dbConfig?.DbName == null)
+                if (dbConfig?.DbHost == null || dbConfig?.DbUser == null || dbConfig?.DbPassword == null || dbConfig?.DbName == null || dbConfig?.DbPort == null)
                     throw new InvalidOperationException("Database configuration is not properly set.");
                 
-                return $"Server={dbConfig.DbHost};User ID={dbConfig.DbUser};Password={dbConfig.DbPassword};Database={dbConfig.DbName};";
+                return $"Server={dbConfig.DbHost};Port={dbConfig.DbPort};User ID={dbConfig.DbUser};Password={dbConfig.DbPassword};Database={dbConfig.DbName};";
             }
         }
+
 
         private const string SQL_CreateTable = "CREATE TABLE IF NOT EXISTS `{0}` ( `steam` varchar(22){1} PRIMARY KEY, `name` varchar(32){2}, `value` int NOT NULL DEFAULT 0, `rank` int NOT NULL DEFAULT 0, `kills` int NOT NULL DEFAULT 0, `deaths` int NOT NULL DEFAULT 0, `shoots` int NOT NULL DEFAULT 0, `hits` int NOT NULL DEFAULT 0, `headshots` int NOT NULL DEFAULT 0, `assists` int NOT NULL DEFAULT 0, `round_win` int NOT NULL DEFAULT 0, `round_lose` int NOT NULL DEFAULT 0, `playtime` int NOT NULL DEFAULT 0, `lastconnect` int NOT NULL DEFAULT 0);";
         public override string ModuleAuthor => PluginAuthor;
@@ -1516,6 +1514,7 @@ namespace RanksPointsNamespace
         public string? DbUser { get; set; }
         public string? DbPassword { get; set; }
         public string? DbName { get; set; }
+        public string? DbPort { get; set; }
 
         public static DatabaseConfig ReadFromJsonFile(string filePath)
         {
