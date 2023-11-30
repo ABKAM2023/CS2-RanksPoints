@@ -1,3 +1,8 @@
+![GitHub Repo stars](https://img.shields.io/github/stars/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/ABKAM2023/CS2-RanksPoints?style=for-the-badge)
+![GitHub all releases](https://img.shields.io/github/downloads/ABKAM2023/CS2-RanksPoints/total?style=for-the-badge)
+
 I'm sorry for my poor English.
 
 # EN
@@ -220,7 +225,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
 - `!topdeaths` displays a list of the top ten players by deaths.
 - `!topkdr` displays a list of the top ten players by KDR.
 - `!toptime` shows the top ten players by time on the server.
-- `!resetstats` Resets your statistics (can be used once every 3 hours).
+- `!resetstats` resets your statistics (can be used once every 3 hours).
 - `!ranks` shows a list of all ranks and the experience required to achieve them.
 - `!lvl` shows a list of all available commands and their functions.
 
@@ -235,7 +240,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
 - This list will be further expanded.
 
 # RU
-Плагин был разработан, вдохновляясь плагинами [Levels Ranks], и заимствует большую часть своих функций, а также базу данных. Это означает, что плагин RanksPoints может быть интегрирован с LrWeb или GameCMS аналогично [Levels Ranks]. В процессе разработки не было возможности полностью проверить плагин, поэтому в его работе могут проявляться ошибки. Если вы обнаружите какие-либо проблемы, сообщите об этом для их исправления.
+Плагин был разработан, вдохновляясь плагином [Levels Ranks], и заимствует большую часть своих функций, а также базу данных. Это означает, что плагин RanksPoints может быть интегрирован с LrWeb или GameCMS аналогично [Levels Ranks]. В процессе разработки не было возможности полностью проверить плагин, поэтому в его работе могут проявляться ошибки. Если вы обнаружите какие-либо проблемы, сообщите об этом для их исправления.
 
 # RanksPoints
 RanksPoints система базируется на простом принципе: игроки совершают разнообразные действия в игре, в результате которых они либо приобретают, либо теряют очки опыта. Достижение или потеря определенного объема этих очков ведет к получению соответствующего ранга. Количество доступных рангов может быть настроено и отредактировано по усмотрению.
@@ -463,7 +468,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Показывает спис
 # Команды для консоли
 - `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
 - `rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
-- `rp_resetranks` Очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
+- `rp_resetranks` очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
 
 # Планируется
 - Расширить список событий, за которые начисляется опыт.
