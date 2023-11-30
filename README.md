@@ -17,7 +17,7 @@ The RanksPoints system is based on a simple principle: players perform various a
 
 5. Connect the plugin to the database by entering the required data in the dbconfig.json file. Make sure the entered data is correct.
 
-#Main Configuration (Config.yml)
+# Main Configuration (Config.yml)
 ```
 # Configuration file for RankPointsPlugin
 # Points for kill - the number of points added to the player for killing an opponent.
