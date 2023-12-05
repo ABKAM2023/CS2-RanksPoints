@@ -215,7 +215,8 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
   "DbHost": "YourHost",
   "DbUser": "YourUser",
   "DbPassword": "YourPassword",
-  "DbName": "YourDatabase"
+  "DbName": "YourDatabase",
+  "DbPort": "3306"
 }
 ```
 # Chat Commands
