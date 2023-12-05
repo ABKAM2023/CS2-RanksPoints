@@ -735,6 +735,10 @@ namespace RanksPointsNamespace
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
+        private void ExecuteOnMainThread(Action action)
+        {
+            Server.NextFrame(action);
+        }
         private async Task<int> AddOrRemovePointsAsync(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
             int updatedPoints = 0;
@@ -753,7 +757,7 @@ namespace RanksPointsNamespace
 
                     if (updatedPoints < 0)
                     {
-                        updatedPoints = 0; 
+                        updatedPoints = 0;
                     }
 
                     var updateQuery = "UPDATE lvl_base SET value = @NewPoints WHERE steam = @SteamID;";
@@ -761,22 +765,21 @@ namespace RanksPointsNamespace
 
                     await transaction.CommitAsync();
 
-                    string sign = points >= 0 ? "+" : "-";
-                    string rawMessage = config.PointsChangeMessage
-                        .Replace("{COLOR}", messageColor)
-                        .Replace("{POINTS}", updatedPoints.ToString())
-                        .Replace("{SIGN}", sign)
-                        .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
-                        .Replace("{REASON}", reason);
+                    ExecuteOnMainThread(() => {
+                        if (playerController != null && playerController.IsValid && !playerController.IsBot)
+                        {
+                            string sign = points >= 0 ? "+" : "-";
+                            string rawMessage = config.PointsChangeMessage
+                                .Replace("{COLOR}", messageColor)
+                                .Replace("{POINTS}", updatedPoints.ToString())
+                                .Replace("{SIGN}", sign)
+                                .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
+                                .Replace("{REASON}", reason);
 
-                    string formattedMessage = ReplaceColorPlaceholders(rawMessage);
-
-                    if (playerController != null && playerController.IsValid && !playerController.IsBot)
-                    {
-                        playerController.PrintToChat(formattedMessage);
-                    }
-                    
-                    await CheckAndUpdateRankAsync(steamId, updatedPoints);
+                            string formattedMessage = ReplaceColorPlaceholders(rawMessage);
+                            playerController.PrintToChat(formattedMessage);
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -786,6 +789,23 @@ namespace RanksPointsNamespace
             }
 
             return updatedPoints;
+        }
+
+        private void SendPointsUpdateMessage(CCSPlayerController playerController, int updatedPoints, int points, string reason, string messageColor)
+        {
+            if (playerController != null && playerController.IsValid && !playerController.IsBot)
+            {
+                string sign = points >= 0 ? "+" : "-";
+                string rawMessage = config.PointsChangeMessage
+                    .Replace("{COLOR}", messageColor)
+                    .Replace("{POINTS}", updatedPoints.ToString())
+                    .Replace("{SIGN}", sign)
+                    .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
+                    .Replace("{REASON}", reason);
+
+                string formattedMessage = ReplaceColorPlaceholders(rawMessage);
+                playerController.PrintToChat(formattedMessage);
+            }
         }
         private async Task<bool> CheckAndUpdateRankAsync(string steamId, int updatedPoints)
         {
