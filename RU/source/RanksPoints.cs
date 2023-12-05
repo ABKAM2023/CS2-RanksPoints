@@ -1053,20 +1053,6 @@ namespace RanksPointsNamespace
             message = ReplaceColorPlaceholders(message);
             player.PrintToChat(message);
         }
-        private async Task<IEnumerable<dynamic>> GetTopPlayersAsync()
-        {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var topPlayersQuery = @"
-                    SELECT steam, name, value
-                    FROM lvl_base
-                    ORDER BY value DESC
-                    LIMIT 10;";
-
-                return await connection.QueryAsync(topPlayersQuery);
-            }
-        }
         [ConsoleCommand("top", "Показывает топ-10 игроков по очкам")]
         public void OnTopCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1078,65 +1064,45 @@ namespace RanksPointsNamespace
 
             try
             {
-                var topPlayersTask = GetTopPlayersAsync();
-                HandleAsyncTopPlayersOperation(topPlayersTask, player);
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, value
+                        FROM lvl_base
+                        ORDER BY value DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = config.TopCommandPlayerMessage
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{POINTS}", topPlayerInfo.value.ToString());
+                            playerMessage = ReplaceColorPlaceholders(playerMessage);
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        string noDataMessage = ReplaceColorPlaceholders(config.TopCommandNoDataMessage);
+                        player.PrintToChat(noDataMessage);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Exception in OnTopCommand: " + ex.Message);
                 string errorMessage = ReplaceColorPlaceholders(config.TopCommandErrorMessage);
                 player.PrintToChat(errorMessage);
-            }
-        }
-
-        private void HandleAsyncTopPlayersOperation(Task<IEnumerable<dynamic>> task, CCSPlayerController player)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async top players operation: {t.Exception}");
-                    string errorMessage = ReplaceColorPlaceholders(config.TopCommandErrorMessage);
-                    player.PrintToChat(errorMessage);
-                    return;
-                }
-
-                var topPlayers = t.Result.ToList();
-                if (topPlayers.Any())
-                {
-                    string introMessage = ReplaceColorPlaceholders(config.TopCommandIntroMessage);
-                    player.PrintToChat(introMessage);
-
-                    for (int i = 0; i < topPlayers.Count; i++)
-                    {
-                        var topPlayerInfo = topPlayers[i];
-                        string playerMessage = config.TopCommandPlayerMessage
-                            .Replace("{INDEX}", (i + 1).ToString())
-                            .Replace("{NAME}", topPlayerInfo.name)
-                            .Replace("{POINTS}", topPlayerInfo.value.ToString());
-                        playerMessage = ReplaceColorPlaceholders(playerMessage);
-                        player.PrintToChat(playerMessage);
-                    }
-                }
-                else
-                {
-                    string noDataMessage = ReplaceColorPlaceholders(config.TopCommandNoDataMessage);
-                    player.PrintToChat(noDataMessage);
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-        private async Task<IEnumerable<dynamic>> GetTopKillsPlayersAsync()
-        {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var topPlayersQuery = @"
-                    SELECT steam, name, kills
-                    FROM lvl_base
-                    ORDER BY kills DESC
-                    LIMIT 10;";
-
-                return await connection.QueryAsync(topPlayersQuery);
             }
         }
         [ConsoleCommand("topkills", "Показывает топ-10 игроков по убийствам")]
@@ -1150,8 +1116,37 @@ namespace RanksPointsNamespace
 
             try
             {
-                var topKillsTask = GetTopKillsPlayersAsync();
-                HandleAsyncTopKillsOperation(topKillsTask, player);
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, kills
+                        FROM lvl_base
+                        ORDER BY kills DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopKillsCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = ReplaceColorPlaceholders(config.TopKillsCommandPlayerMessage)
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{KILLS}", topPlayerInfo.kills.ToString());
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandNoDataMessage));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1160,54 +1155,6 @@ namespace RanksPointsNamespace
             }
         }
 
-        private void HandleAsyncTopKillsOperation(Task<IEnumerable<dynamic>> task, CCSPlayerController player)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async top kills operation: {t.Exception}");
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandErrorMessage));
-                    return;
-                }
-
-                var topPlayers = t.Result.ToList();
-                if (topPlayers.Any())
-                {
-                    string introMessage = ReplaceColorPlaceholders(config.TopKillsCommandIntroMessage);
-                    player.PrintToChat(introMessage);
-
-                    for (int i = 0; i < topPlayers.Count; i++)
-                    {
-                        var topPlayerInfo = topPlayers[i];
-                        string playerMessage = ReplaceColorPlaceholders(config.TopKillsCommandPlayerMessage)
-                            .Replace("{INDEX}", (i + 1).ToString())
-                            .Replace("{NAME}", topPlayerInfo.name)
-                            .Replace("{KILLS}", topPlayerInfo.kills.ToString());
-                        player.PrintToChat(playerMessage);
-                    }
-                }
-                else
-                {
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandNoDataMessage));
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-
-        private async Task<IEnumerable<dynamic>> GetTopDeathsPlayersAsync()
-        {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var topPlayersQuery = @"
-                    SELECT steam, name, deaths
-                    FROM lvl_base
-                    ORDER BY deaths DESC
-                    LIMIT 10;";
-
-                return await connection.QueryAsync(topPlayersQuery);
-            }
-        }
         [ConsoleCommand("topdeaths", "Показывает топ-10 игроков по смертям")]
         public void OnTopDeathsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1219,8 +1166,37 @@ namespace RanksPointsNamespace
 
             try
             {
-                var topDeathsTask = GetTopDeathsPlayersAsync();
-                HandleAsyncTopDeathsOperation(topDeathsTask, player);
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, deaths
+                        FROM lvl_base
+                        ORDER BY deaths DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopDeathsCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            string playerMessage = ReplaceColorPlaceholders(config.TopDeathsCommandPlayerMessage)
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{DEATHS}", topPlayerInfo.deaths.ToString());
+                            player.PrintToChat(playerMessage);
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandNoDataMessage));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1229,53 +1205,6 @@ namespace RanksPointsNamespace
             }
         }
 
-        private void HandleAsyncTopDeathsOperation(Task<IEnumerable<dynamic>> task, CCSPlayerController player)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async top deaths operation: {t.Exception}");
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandErrorMessage));
-                    return;
-                }
-
-                var topPlayers = t.Result.ToList();
-                if (topPlayers.Any())
-                {
-                    string introMessage = ReplaceColorPlaceholders(config.TopDeathsCommandIntroMessage);
-                    player.PrintToChat(introMessage);
-
-                    for (int i = 0; i < topPlayers.Count; i++)
-                    {
-                        var topPlayerInfo = topPlayers[i];
-                        string playerMessage = ReplaceColorPlaceholders(config.TopDeathsCommandPlayerMessage)
-                            .Replace("{INDEX}", (i + 1).ToString())
-                            .Replace("{NAME}", topPlayerInfo.name)
-                            .Replace("{DEATHS}", topPlayerInfo.deaths.ToString());
-                        player.PrintToChat(playerMessage);
-                    }
-                }
-                else
-                {
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandNoDataMessage));
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-        private async Task<IEnumerable<dynamic>> GetTopKDRPlayersAsync()
-        {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var topPlayersQuery = @"
-                    SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
-                    FROM lvl_base
-                    ORDER BY kdr DESC, kills DESC
-                    LIMIT 10;";
-
-                return await connection.QueryAsync(topPlayersQuery);
-            }
-        }
         [ConsoleCommand("topkdr", "Показывает топ-10 игроков по KDR")]
         public void OnTopKDRCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1287,8 +1216,37 @@ namespace RanksPointsNamespace
 
             try
             {
-                var topKDRTask = GetTopKDRPlayersAsync();
-                HandleAsyncTopKDROperation(topKDRTask, player);
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
+                        FROM lvl_base
+                        ORDER BY kdr DESC, kills DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopKDRCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        foreach (var topPlayerInfo in topPlayers)
+                        {
+                            string formattedKDR = topPlayerInfo.kdr.ToString("F2");
+                            string playerMessage = config.TopKDRCommandPlayerMessage
+                                .Replace("{INDEX}", (topPlayers.IndexOf(topPlayerInfo) + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{KDR}", formattedKDR);
+                            player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandNoDataMessage));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1297,54 +1255,6 @@ namespace RanksPointsNamespace
             }
         }
 
-        private void HandleAsyncTopKDROperation(Task<IEnumerable<dynamic>> task, CCSPlayerController player)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async top KDR operation: {t.Exception}");
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandErrorMessage));
-                    return;
-                }
-
-                var topPlayers = t.Result.ToList();
-                if (topPlayers.Any())
-                {
-                    string introMessage = ReplaceColorPlaceholders(config.TopKDRCommandIntroMessage);
-                    player.PrintToChat(introMessage);
-
-                    foreach (var topPlayerInfo in topPlayers)
-                    {
-                        string formattedKDR = topPlayerInfo.kdr.ToString("F2");
-                        string playerMessage = config.TopKDRCommandPlayerMessage
-                            .Replace("{INDEX}", (topPlayers.IndexOf(topPlayerInfo) + 1).ToString())
-                            .Replace("{NAME}", topPlayerInfo.name)
-                            .Replace("{KDR}", formattedKDR);
-                        player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
-                    }
-                }
-                else
-                {
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandNoDataMessage));
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-
-        private async Task<IEnumerable<dynamic>> GetTopPlaytimePlayersAsync()
-        {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var topPlayersQuery = @"
-                    SELECT steam, name, playtime
-                    FROM lvl_base
-                    ORDER BY playtime DESC
-                    LIMIT 10;";
-
-                return await connection.QueryAsync(topPlayersQuery);
-            }
-        }
         [ConsoleCommand("toptime", "Показывает топ-10 игроков по времени на сервере")]
         public void OnTopTimeCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1356,8 +1266,40 @@ namespace RanksPointsNamespace
 
             try
             {
-                var topTimeTask = GetTopPlaytimePlayersAsync();
-                HandleAsyncTopTimeOperation(topTimeTask, player);
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var topPlayersQuery = @"
+                        SELECT steam, name, playtime
+                        FROM lvl_base
+                        ORDER BY playtime DESC
+                        LIMIT 10;";
+
+                    var topPlayers = connection.Query(topPlayersQuery).ToList();
+
+                    if (topPlayers.Any())
+                    {
+                        string introMessage = ReplaceColorPlaceholders(config.TopTimeCommandIntroMessage);
+                        player.PrintToChat(introMessage);
+
+                        for (int i = 0; i < topPlayers.Count; i++)
+                        {
+                            var topPlayerInfo = topPlayers[i];
+                            TimeSpan timePlayed = TimeSpan.FromSeconds(topPlayerInfo.playtime);
+                            string formattedTime = string.Format(config.TopTimeFormat,
+                                timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
+                            string playerMessage = config.TopTimeCommandPlayerMessage
+                                .Replace("{INDEX}", (i + 1).ToString())
+                                .Replace("{NAME}", topPlayerInfo.name)
+                                .Replace("{TIME}", formattedTime);
+                            player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
+                        }
+                    }
+                    else
+                    {
+                        player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandNoDataMessage));
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1366,42 +1308,6 @@ namespace RanksPointsNamespace
             }
         }
 
-        private void HandleAsyncTopTimeOperation(Task<IEnumerable<dynamic>> task, CCSPlayerController player)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async top playtime operation: {t.Exception}");
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandErrorMessage));
-                    return;
-                }
-
-                var topPlayers = t.Result.ToList();
-                if (topPlayers.Any())
-                {
-                    string introMessage = ReplaceColorPlaceholders(config.TopTimeCommandIntroMessage);
-                    player.PrintToChat(introMessage);
-
-                    for (int i = 0; i < topPlayers.Count; i++)
-                    {
-                        var topPlayerInfo = topPlayers[i];
-                        TimeSpan timePlayed = TimeSpan.FromSeconds(topPlayerInfo.playtime);
-                        string formattedTime = string.Format(config.TopTimeFormat,
-                            timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
-                        string playerMessage = config.TopTimeCommandPlayerMessage
-                            .Replace("{INDEX}", (i + 1).ToString())
-                            .Replace("{NAME}", topPlayerInfo.name)
-                            .Replace("{TIME}", formattedTime);
-                        player.PrintToChat(ReplaceColorPlaceholders(playerMessage));
-                    }
-                }
-                else
-                {
-                    player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandNoDataMessage));
-                }
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
         [ConsoleCommand("resetstats", "Сбросить свою статистику (можно использовать раз в 3 часа)")]
         public void OnResetStatsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1420,35 +1326,22 @@ namespace RanksPointsNamespace
                 }
             }
 
-            var resetTask = ResetPlayerStatsAsync(steamId);
-            HandleAsyncResetOperation(resetTask, player, steamId);
+            ResetPlayerStats(steamId);
+            playerResetTimes[steamId] = new PlayerResetInfo { LastResetTime = DateTime.UtcNow };
+            
+            string successMessage = ReplaceColorPlaceholders(config.ResetStatsSuccessMessage);
+            player.PrintToChat(successMessage);
         }
 
-        private void HandleAsyncResetOperation(Task task, CCSPlayerController player, string steamId)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async reset operation: {t.Exception}");
-                    return;
-                }
-
-                playerResetTimes[steamId] = new PlayerResetInfo { LastResetTime = DateTime.UtcNow };
-                string successMessage = ReplaceColorPlaceholders(config.ResetStatsSuccessMessage);
-                player.PrintToChat(successMessage);
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-        private async Task ResetPlayerStatsAsync(string steamId)
+        private void ResetPlayerStats(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
-                await connection.OpenAsync();
+                connection.Open();
                 var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(resetQuery, new { SteamID = steamId });
+                connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
-
 
         [ConsoleCommand("rp_reloadconfig", "Перезагружает конфигурационный файл Config.yml")]
         public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
@@ -1564,7 +1457,10 @@ namespace RanksPointsNamespace
                 player.PrintToChat(description);
             }
         }
+
+
         [ConsoleCommand("rp_resetranks", "Очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type>")]
+        [CommandHelper(minArgs: 2, usage: "<steamid64> <data-type>", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
         public void ResetRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null || player.IsBot) 
@@ -1584,16 +1480,16 @@ namespace RanksPointsNamespace
                     switch (dataType)
                     {
                         case "exp":
-                            var expTask = ResetPlayerExperienceAsync(steamId);
-                            HandleAsyncResetOperation(expTask, $"Опыт и ранг игрока {steamId} (SteamID64: {steamId64}) были сброшены.");
+                            ResetPlayerExperience(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Опыт и ранг игрока {steamId} (SteamID64: {steamId64}) были сброшены.");
                             break;
                         case "stats":
-                            var statsTask = ResetPlayerStatsAsync(steamId);
-                            HandleAsyncResetOperation(statsTask, $"Статистика игрока {steamId} (SteamID64: {steamId64}) была сброшена.");
+                            ResetPlayerStats(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Статистика игрока {steamId} (SteamID64: {steamId64}) была сброшена.");
                             break;
                         case "time":
-                            var timeTask = ResetPlayerPlaytimeAsync(steamId);
-                            HandleAsyncResetOperation(timeTask, $"Время игры игрока {steamId} (SteamID64: {steamId64}) было сброшено.");
+                            ResetPlayerPlaytime(steamId);
+                            Console.WriteLine($"[RankPointsPlugin] Время игры игрока {steamId} (SteamID64: {steamId64}) было сброшено.");
                             break;
                         default:
                             Console.WriteLine("Неверный тип данных. Используйте 'exp', 'stats' или 'time'.");
@@ -1611,35 +1507,33 @@ namespace RanksPointsNamespace
             }
         }
 
-        private void HandleAsyncResetOperation(Task task, string successMessage)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async reset operation: {t.Exception}");
-                    return;
-                }
-
-                Console.WriteLine(successMessage);
-            }, TaskContinuationOptions.OnlyOnRanToCompletion);
-        }
-        private async Task ResetPlayerExperienceAsync(string steamId)
+        private void ResetPlayerExperience(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
-                await connection.OpenAsync();
+                connection.Open();
                 var resetQuery = "UPDATE lvl_base SET value = 0, rank = 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(resetQuery, new { SteamID = steamId });
+                connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
-        private async Task ResetPlayerPlaytimeAsync(string steamId)
+
+        private void ResetPlayerStats2(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
-                await connection.OpenAsync();
+                connection.Open();
+                var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
+                connection.Execute(resetQuery, new { SteamID = steamId });
+            }
+        }
+
+        private void ResetPlayerPlaytime(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                connection.Open();
                 var resetQuery = "UPDATE lvl_base SET playtime = 0 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(resetQuery, new { SteamID = steamId });
+                connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
         private void CreateTable()
