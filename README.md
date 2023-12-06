@@ -217,6 +217,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
   "DbPassword": "YourPassword",
   "DbName": "YourDatabase",
   "DbPort": "3306"
+  "Name": "lvl_base"
 }
 ```
 # Chat Commands
@@ -452,6 +453,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Показывает спис
   "DbUser": "YourUser",
   "DbPassword": "YourPassword",
   "DbName": "YourDatabase"
+  "Name": "lvl_base"
 }
 ```
 
