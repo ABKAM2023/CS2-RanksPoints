@@ -8,6 +8,7 @@ using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -23,7 +24,7 @@ namespace RanksPointsNamespace
     {
         private const string PluginAuthor = "ABKAM";
         private const string PluginName = "[RanksPoints] by ABKAM";
-        private const string PluginVersion = "2.0.1";
+        private const string PluginVersion = "2.0.2";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -44,7 +45,7 @@ namespace RanksPointsNamespace
             public int PointsForHeadshot { get; set; } = 1;
             public int PointsForBombDefusal { get; set; } = 2; 
             public int PointsForBombPlanting { get; set; } = 2; 
-            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players needed to earn experience.";
+            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to earn experience.";
             public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Your experience:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]";
             public string SuicideMessage { get; set; } = "suicide"; 
             public string SuicideMessageColor { get; set; } = "{Red}"; 
@@ -52,7 +53,7 @@ namespace RanksPointsNamespace
             public string DeathMessageColor { get; set; } = "{Red}"; 
             public string KillMessage { get; set; } = "kill"; 
             public string KillMessageColor { get; set; } = "{Green}";  
-            public string NoScopeAWPMessage { get; set; } = "no-scope AWP kill";
+            public string NoScopeAWPMessage { get; set; } = "AWP kill without scope";
             public string NoScopeAWPMessageColor { get; set; } = "{Blue}";
             public string HeadshotMessage { get; set; } = "headshot"; 
             public string HeadshotMessageColor { get; set; } = "{Yellow}";
@@ -68,7 +69,7 @@ namespace RanksPointsNamespace
             public string BombDefusalMessageColor { get; set; } = "{Green}";     
             public string BombPlantingMessage { get; set; } = "bomb planting";             
             public string BombPlantingMessageColor { get; set; } = "{Green}";          
-            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Place: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}";                                                            
+            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}";                                                            
             public string TimeFormat { get; set; } = "{0}d {1}h {2}min";   
             public string TopCommandIntroMessage { get; set; } = "[ {Blue}Top Players{White} ]"; 
             public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} points{White}"; 
@@ -86,27 +87,27 @@ namespace RanksPointsNamespace
             public string TopKDRCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}";
             public string TopKDRCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by KDR.";
             public string TopKDRCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top Players by Time on Server{White} ]";
+            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top Players by Server Time{White} ]";
             public string TopTimeCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}";
-            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by time on server.";
+            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by server time.";
             public string TopTimeCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
             public string TopTimeFormat { get; set; } = "{0}d {1}h {2}min";
-            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can reset your stats only once every 3 hours.";
-            public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your stats have been reset.";
+            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can only reset your statistics once every 3 hours.";
+            public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your statistics have been reset.";
             public double ResetStatsCooldownHours { get; set; } = 3.0; 
             public string RanksCommandIntroMessage { get; set; } = "[ {Gold}List of Ranks{White} ]";
             public string RanksCommandRankMessage { get; set; } = "{NAME} - {Green}{EXPERIENCE} experience{White}";
             public string RanksCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on ranks.";
             public string RanksCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
             public string LvlCommandIntroMessage { get; set; } = "[ {Gold}List of Available Commands{White} ]"; 
-            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Displays your current rank and stats";
-            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Shows the top 10 players by points";
-            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Shows the top 10 players by kills";  
-            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Shows the top 10 players by deaths";
-            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Shows the top 10 players by KDR";
-            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Shows the top 10 players by time on server";
-            public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Reset your stats (can be used once every 3 hours)";
-            public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Shows a list of all ranks and the experience required to obtain them";       
+            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Displays your current rank and statistics";
+            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Displays the top 10 players by points";
+            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Displays the top 10 players by kills";  
+            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Displays the top 10 players by deaths";
+            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Displays the top 10 players by KDR";
+            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Displays the top 10 players by server time";
+            public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Reset your statistics (can be used once every 3 hours)";
+            public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Displays a list of all ranks and the experience required to achieve them";       
             public string RankUpMessage { get; set; } = "Your rank has been upgraded to {RANK_NAME}!";
             public string RankDownMessage { get; set; } = "Your rank has been downgraded to {RANK_NAME}.";
         } 
@@ -122,28 +123,28 @@ namespace RanksPointsNamespace
 
             stringBuilder.AppendLine("# Configuration file for RankPointsPlugin");
 
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for kill - number of points added to the player for killing an enemy.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Points deducted for death - number of points subtracted from the player for dying.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for assist - number of points added to the player for assisting in a kill.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Points for suicide - number of points subtracted from the player for committing suicide.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for headshot - additional points for killing with a headshot.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for round win - number of points added to the player for their team's victory in a round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for round loss - number of points subtracted from the player for their team's loss in a round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Points for MVP - number of points added to the player for earning the MVP title of the round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for no-scope AWP kill - additional points for killing without using the scope.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for kill - the number of points added to a player for killing an opponent.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Points deducted for death - the number of points subtracted from a player for dying.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for assist - the number of points added to a player for assisting in a kill.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Points for suicide - the number of points subtracted from a player for committing suicide.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for headshot - additional points for a kill with a headshot.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for round win - the number of points added to a player for their team's round win.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for round loss - the number of points subtracted from a player for their team's round loss.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Points for MVP - the number of points added to a player for earning the MVP title of the round.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for no-scope AWP kill - additional points for a kill without using a scope.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Points for bomb defusal");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Points for bomb planting");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank upgrade.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank downgrade.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank increase.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank decrease.");
 
-            stringBuilder.AppendLine("# Minimum number of players for earning experience - players earn experience only if at least this number of players are playing on the server.");
+            stringBuilder.AppendLine("# Minimum number of players for experience accrual - players earn experience only if at least this number of players are playing on the server.");
             stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{EscapeMessage(config.GetActivePlayerCountMsg)}\"");
             AppendConfigValue(stringBuilder, nameof(config.MinPlayersForExperience), config.MinPlayersForExperience);
 
             stringBuilder.AppendLine();
-            stringBuilder.AppendLine("# Messages upon gaining experience");                  
+            stringBuilder.AppendLine("# Messages for gaining experience");                  
             stringBuilder.AppendLine($"PointsChangeMessage: \"{EscapeMessage(config.PointsChangeMessage)}\"");
-            stringBuilder.AppendLine("# Events");            
+            stringBuilder.AppendLine("# Events");                    
             stringBuilder.AppendLine($"SuicideMessage: \"{EscapeMessage(config.SuicideMessage)}\"");
             stringBuilder.AppendLine($"SuicideMessageColor: \"{EscapeMessage(config.SuicideMessageColor)}\"");
             stringBuilder.AppendLine($"DeathMessage: \"{EscapeMessage(config.DeathMessage)}\"");
@@ -235,6 +236,7 @@ namespace RanksPointsNamespace
 
             File.WriteAllText(filePath, stringBuilder.ToString());
         }
+
         private string EscapeMessage(string message)
         {
             return message.Replace("\"", "\\\"").Replace("\n", "\\n");
@@ -267,12 +269,12 @@ namespace RanksPointsNamespace
                     new RankConfig { Id = 6, Name = "Gold Star - I", MinExperience = 150 },
                     new RankConfig { Id = 7, Name = "Gold Star - II", MinExperience = 200 },
                     new RankConfig { Id = 8, Name = "Gold Star - III", MinExperience = 300 },
-                    new RankConfig { Id = 9, Name = "Gold Star - Master", MinExperience = 500 },
-                    new RankConfig { Id = 10, Name = "Master Guardian - I", MinExperience = 750 },
-                    new RankConfig { Id = 11, Name = "Master Guardian - II", MinExperience = 1000 },
-                    new RankConfig { Id = 12, Name = "Master Guardian Elite", MinExperience = 1500 },
-                    new RankConfig { Id = 13, Name = "Distinguished Master Guardian", MinExperience = 2000 },
-                    new RankConfig { Id = 14, Name = "Legendary Eagle", MinExperience = 3000 },
+                    new RankConfig { Id = 9, Name = "Gold Star - Master", MinExperience = 500 },                                                                                                                                            
+                    new RankConfig { Id = 10, Name = "Master Guardian - I", MinExperience = 750 },  
+                    new RankConfig { Id = 11, Name = "Master Guardian - II", MinExperience = 1000 },  
+                    new RankConfig { Id = 12, Name = "Master Guardian - Elite", MinExperience = 1500 },  
+                    new RankConfig { Id = 13, Name = "Distinguished Master Guardian", MinExperience = 2000 },  
+                    new RankConfig { Id = 14, Name = "Legendary Eagle", MinExperience = 3000 },  
                     new RankConfig { Id = 15, Name = "Legendary Eagle Master", MinExperience = 5000 },
                     new RankConfig { Id = 16, Name = "Supreme Master First Class", MinExperience = 7500 },
                     new RankConfig { Id = 17, Name = "Global Elite", MinExperience = 10000 },
@@ -300,7 +302,7 @@ namespace RanksPointsNamespace
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error reading rank configuration file:: {ex.Message}");
+                Console.WriteLine($"Error reading configuration file for titles: {ex.Message}");
                 return new List<RankConfig>();
             }
         }
@@ -345,7 +347,7 @@ namespace RanksPointsNamespace
             {
                 await connection.OpenAsync();
 
-                var insertQuery = "INSERT INTO lvl_base (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
+                var insertQuery = $"INSERT INTO {dbConfig.Name} (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
                 await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
             }
         }
@@ -464,7 +466,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var updateQuery = "UPDATE lvl_base SET shoots = shoots + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET shoots = shoots + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
@@ -474,7 +476,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var updateQuery = "UPDATE lvl_base SET hits = hits + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET hits = hits + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
@@ -520,14 +522,14 @@ namespace RanksPointsNamespace
             {
                 await connection.OpenAsync();
 
-                var playerData = await connection.QueryFirstOrDefaultAsync("SELECT lastconnect, playtime FROM lvl_base WHERE steam = @SteamID", new { SteamID = steamId });
+                var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM {dbConfig.Name} WHERE steam = @SteamID", new { SteamID = steamId });
 
                 if (playerData != null)
                 {
                     var sessionTime = currentTime - playerData.lastconnect;
                     var newPlaytime = playerData.playtime + sessionTime;
 
-                    var updateQuery = "UPDATE lvl_base SET playtime = @Playtime WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET playtime = @Playtime WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
                 }
             }
@@ -615,7 +617,7 @@ namespace RanksPointsNamespace
                 await connection.OpenAsync();
 
                 string columnToUpdate = isWin ? "round_win" : "round_lose";
-                var updateQuery = $"UPDATE lvl_base SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
@@ -710,7 +712,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var updateQuery = "UPDATE lvl_base SET headshots = headshots + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET headshots = headshots + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
@@ -720,18 +722,17 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var updateQuery = "UPDATE lvl_base SET assists = assists + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET assists = assists + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
-
         private async Task UpdateKillsOrDeathsAsync(string steamId, bool isKill)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
                 string columnToUpdate = isKill ? "kills" : "deaths";
-                var updateQuery = $"UPDATE lvl_base SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
                 await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
             }
         }
@@ -739,58 +740,87 @@ namespace RanksPointsNamespace
         {
             Server.NextFrame(action);
         }
+        private readonly Dictionary<string, SemaphoreSlim> playerSemaphores = new Dictionary<string, SemaphoreSlim>();
+
         private async Task<int> AddOrRemovePointsAsync(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
-            int updatedPoints = 0;
-
-            using (var connection = new MySqlConnection(ConnectionString))
+            // Обеспечиваем наличие объекта семафора для каждого игрока
+            if (!playerSemaphores.ContainsKey(steamId))
             {
-                await connection.OpenAsync();
-                var transaction = await connection.BeginTransactionAsync();
-
-                try
-                {
-                    var currentPointsQuery = "SELECT value FROM lvl_base WHERE steam = @SteamID;";
-                    var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
-
-                    updatedPoints = currentPoints + points;
-
-                    if (updatedPoints < 0)
-                    {
-                        updatedPoints = 0;
-                    }
-
-                    var updateQuery = "UPDATE lvl_base SET value = @NewPoints WHERE steam = @SteamID;";
-                    await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
-
-                    await transaction.CommitAsync();
-
-                    ExecuteOnMainThread(() => {
-                        if (playerController != null && playerController.IsValid && !playerController.IsBot)
-                        {
-                            string sign = points >= 0 ? "+" : "-";
-                            string rawMessage = config.PointsChangeMessage
-                                .Replace("{COLOR}", messageColor)
-                                .Replace("{POINTS}", updatedPoints.ToString())
-                                .Replace("{SIGN}", sign)
-                                .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
-                                .Replace("{REASON}", reason);
-
-                            string formattedMessage = ReplaceColorPlaceholders(rawMessage);
-                            playerController.PrintToChat(formattedMessage);
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    Console.WriteLine("Exception in AddOrRemovePointsAsync: " + ex.Message);
-                }
+                playerSemaphores[steamId] = new SemaphoreSlim(1, 1);
             }
 
+            int updatedPoints = 0;
+
+            // Используем семафор для синхронизированного доступа к данным игрока
+            await playerSemaphores[steamId].WaitAsync();
+
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var transaction = await connection.BeginTransactionAsync();
+
+                    try
+                    {
+                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID;";
+                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+
+                        updatedPoints = currentPoints + points;
+
+                        if (updatedPoints < 0)
+                        {
+                            updatedPoints = 0;
+                        }
+
+                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine("Exception in AddOrRemovePointsAsync: " + ex.Message);
+                    }
+                }
+
+                // Обновление UI в главном потоке
+                ExecuteOnMainThread(() => {
+                    if (playerController != null && playerController.IsValid && !playerController.IsBot)
+                    {
+                        string sign = points >= 0 ? "+" : "-";
+                        string rawMessage = config.PointsChangeMessage
+                            .Replace("{COLOR}", messageColor)
+                            .Replace("{POINTS}", updatedPoints.ToString())
+                            .Replace("{SIGN}", sign)
+                            .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
+                            .Replace("{REASON}", reason);
+
+                        string formattedMessage = ReplaceColorPlaceholders(rawMessage);
+                        playerController.PrintToChat(formattedMessage);
+                    }
+                });
+            }
+            finally
+            {
+                playerSemaphores[steamId].Release();
+            }
+
+            await CheckAndUpdateRankAsync(steamId, updatedPoints);
             return updatedPoints;
         }
 
+        private void UpdatePlayerUI(string steamId, int updatedPoints, int points, string reason, string messageColor)
+        {
+            var steamId64 = ConvertSteamIDToSteamID64(steamId);
+            var playerController = FindPlayerBySteamID(steamId64);
+            if (playerController != null && playerController.IsValid && !playerController.IsBot)
+            {
+                SendPointsUpdateMessage(playerController, updatedPoints, points, reason, messageColor);
+            }
+        }
         private void SendPointsUpdateMessage(CCSPlayerController playerController, int updatedPoints, int points, string reason, string messageColor)
         {
             if (playerController != null && playerController.IsValid && !playerController.IsBot)
@@ -810,39 +840,46 @@ namespace RanksPointsNamespace
         private async Task<bool> CheckAndUpdateRankAsync(string steamId, int updatedPoints)
         {
             var ranksConfig = LoadRanksConfig();
-            var newRankIndex = 0;
+            var newRankIndex = -1;
 
+            // Находим наивысший доступный ранг
             for (int i = 0; i < ranksConfig.Count; i++)
             {
                 if (updatedPoints >= ranksConfig[i].MinExperience)
                 {
                     newRankIndex = i;
                 }
+                else
+                {
+                    break; // Прерываем цикл, так как все последующие ранги будут требовать больше очков
+                }
             }
 
-            var newRank = ranksConfig[newRankIndex];
-
-            if (newRank != null)
+            // Проверяем, был ли найден новый ранг
+            if (newRankIndex != -1)
             {
+                var newRank = ranksConfig[newRankIndex];
+
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var currentRankQuery = "SELECT rank FROM lvl_base WHERE steam = @SteamID;";
+                    var currentRankQuery = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
                     var currentRankId = await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
 
                     if (currentRankId != newRank.Id)
                     {
-                        var updateRankQuery = "UPDATE lvl_base SET rank = @NewRankId WHERE steam = @SteamID;";
+                        var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
 
                         bool isRankUp = newRank.Id > currentRankId;
-                        NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                        ExecuteOnMainThread(() => NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp));
                         return true;
                     }
                 }
             }
             return false;
         }
+
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
             string steamId64 = ConvertSteamIDToSteamID64(steamId);
@@ -858,6 +895,7 @@ namespace RanksPointsNamespace
                 }
             }
         }
+
         private string ConvertSteamIDToSteamID64(string steamID)
         {
             if (string.IsNullOrEmpty(steamID) || !steamID.StartsWith("STEAM_"))
@@ -873,7 +911,7 @@ namespace RanksPointsNamespace
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ConvertSteamIDToSteamID64] Error during SteamID conversion: {ex.Message}");
+                Console.WriteLine($"[ConvertSteamIDToSteamID64] Error converting SteamID: {ex.Message}");
                 return null;
             }
         }
@@ -891,7 +929,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var query = "SELECT rank FROM lvl_base WHERE steam = @SteamID;";
+                var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
                 var rankId = await connection.QueryFirstOrDefaultAsync<int>(query, new { SteamID = steamID });
 
                 RankConfig? defaultRank = ranksConfig.FirstOrDefault(r => r.Id == 0);
@@ -966,11 +1004,11 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 await connection.OpenAsync();
-                var playerData = await connection.QueryFirstOrDefaultAsync(@"
+                var playerData = await connection.QueryFirstOrDefaultAsync($@"
                     SELECT p.rank, p.value as points, p.kills, p.deaths, p.playtime,
-                        (SELECT COUNT(*) FROM lvl_base WHERE value > p.value) + 1 as place,
-                        (SELECT COUNT(*) FROM lvl_base) as totalPlayers
-                    FROM lvl_base p
+                        (SELECT COUNT(*) FROM {dbConfig.Name} WHERE value > p.value) + 1 as place,
+                        (SELECT COUNT(*) FROM {dbConfig.Name}) as totalPlayers
+                    FROM {dbConfig.Name} p
                     WHERE p.steam = @SteamID;", new { SteamID = steamId });
 
                 if (playerData == null)
@@ -1026,7 +1064,6 @@ namespace RanksPointsNamespace
             return string.Format(config.TimeFormat, timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
         }
 
-        
         [ConsoleCommand("rank", "Displays your current rank and statistics")]
         public void OnRankCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1050,7 +1087,7 @@ namespace RanksPointsNamespace
             message = ReplaceColorPlaceholders(message);
             player.PrintToChat(message);
         }
-        [ConsoleCommand("top", "Displays the top 10 players by points")]
+        [ConsoleCommand("top", "Displays the top 10 players by score")]
         public void OnTopCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
@@ -1064,9 +1101,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = @"
+                    var topPlayersQuery = $@"
                         SELECT steam, name, value
-                        FROM lvl_base
+                        FROM {dbConfig.Name}
                         ORDER BY value DESC
                         LIMIT 10;";
 
@@ -1102,7 +1139,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat(errorMessage);
             }
         }
-
         [ConsoleCommand("topkills", "Displays the top 10 players by kills")]
         public void OnTopKillsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1117,9 +1153,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = @"
+                    var topPlayersQuery = $@"
                         SELECT steam, name, kills
-                        FROM lvl_base
+                        FROM {dbConfig.Name}
                         ORDER BY kills DESC
                         LIMIT 10;";
 
@@ -1152,7 +1188,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandErrorMessage));
             }
         }
-
         [ConsoleCommand("topdeaths", "Displays the top 10 players by deaths")]
         public void OnTopDeathsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1167,9 +1202,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = @"
+                    var topPlayersQuery = $@"
                         SELECT steam, name, deaths
-                        FROM lvl_base
+                        FROM {dbConfig.Name}
                         ORDER BY deaths DESC
                         LIMIT 10;";
 
@@ -1202,8 +1237,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandErrorMessage));
             }
         }
-
-        [ConsoleCommand("topkdr", "Displays the top 10 players by KDR")]
+        [ConsoleCommand("topkdr", "Displays the top 10 players by KDR (Kill-Death Ratio)")]
         public void OnTopKDRCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
@@ -1217,9 +1251,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = @"
+                    var topPlayersQuery = $@"
                         SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
-                        FROM lvl_base
+                        FROM {dbConfig.Name}
                         ORDER BY kdr DESC, kills DESC
                         LIMIT 10;";
 
@@ -1252,8 +1286,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandErrorMessage));
             }
         }
-
-        [ConsoleCommand("toptime", "Displays the top 10 players by server time")]
+        [ConsoleCommand("toptime", "Displays the top 10 players by time on the server")]
         public void OnTopTimeCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
@@ -1267,9 +1300,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = @"
+                    var topPlayersQuery = $@"
                         SELECT steam, name, playtime
-                        FROM lvl_base
+                        FROM {dbConfig.Name}
                         ORDER BY playtime DESC
                         LIMIT 10;";
 
@@ -1336,11 +1369,10 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
-
         [ConsoleCommand("rp_reloadconfig", "Reloads the configuration file Config.yml")]
         public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1354,7 +1386,7 @@ namespace RanksPointsNamespace
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RankPointsPlugin] Error reloading configuration: {ex.Message}");
+                    Console.WriteLine($"[RankPointsPlugin] Error while reloading the configuration: {ex.Message}");
                 }
             }
             else
@@ -1362,7 +1394,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat("This command is only available from the server console.");
             }
         }
-
         [ConsoleCommand("rp_reloadranks", "Reloads the configuration file settings_ranks.yaml")]
         public void ReloadRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1376,7 +1407,7 @@ namespace RanksPointsNamespace
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RankPointsPlugin] Error reloading rank configuration: {ex.Message}");
+                    Console.WriteLine($"[RankPointsPlugin] Error while reloading the rank configuration: {ex.Message}");
                 }
             }
             else
@@ -1384,7 +1415,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat("{Red}This command is only available from the server console.");
             }
         }
-
         [ConsoleCommand("ranks", "Displays a list of all ranks and the experience required to obtain them")]
         public void OnRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1425,7 +1455,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat(errorMessage);
             }
         }
-     
         [ConsoleCommand("lvl", "Displays a list of all available commands and their functions")]
         public void OnLvlCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1455,7 +1484,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat(description);
             }
         }
-
         [ConsoleCommand("rp_resetranks", "Clears a player's statistics. Usage: rp_resetranks <steamid64> <data-type>")]
         [CommandHelper(minArgs: 2, usage: "<steamid64> <data-type>", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
         public void ResetRanksCommand(CCSPlayerController? player, CommandInfo command)
@@ -1478,11 +1506,11 @@ namespace RanksPointsNamespace
                     {
                         case "exp":
                             ResetPlayerExperience(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Player experience and rank for {steamId} (SteamID64: {steamId64}) have been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Experience and rank for player {steamId} (SteamID64: {steamId64}) have been reset.");
                             break;
                         case "stats":
                             ResetPlayerStats(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Player statistics for {steamId} (SteamID64: {steamId64}) have been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Player stats for {steamId} (SteamID64: {steamId64}) have been reset.");
                             break;
                         case "time":
                             ResetPlayerPlaytime(steamId);
@@ -1503,33 +1531,30 @@ namespace RanksPointsNamespace
                 player.PrintToChat($"{ChatColors.Red}This command is only available from the server console.");
             }
         }
-
         private void ResetPlayerExperience(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = "UPDATE lvl_base SET value = 0, rank = 1 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE {dbConfig.Name} SET value = 0, rank = 1 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
-
         private void ResetPlayerStats2(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = "UPDATE lvl_base SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
-
         private void ResetPlayerPlaytime(string steamId)
         {
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = "UPDATE lvl_base SET playtime = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE {dbConfig.Name} SET playtime = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
@@ -1539,7 +1564,7 @@ namespace RanksPointsNamespace
             {
                 connection.Open();
 
-                var createTableQuery = string.Format(SQL_CreateTable, "lvl_base", "", "");
+                var createTableQuery = string.Format(SQL_CreateTable, $"{dbConfig.Name}", "", "");
                 connection.Execute(createTableQuery);
             }
         }
@@ -1555,7 +1580,6 @@ namespace RanksPointsNamespace
             }
         }
 
-
         private const string SQL_CreateTable = "CREATE TABLE IF NOT EXISTS `{0}` ( `steam` varchar(22){1} PRIMARY KEY, `name` varchar(32){2}, `value` int NOT NULL DEFAULT 0, `rank` int NOT NULL DEFAULT 0, `kills` int NOT NULL DEFAULT 0, `deaths` int NOT NULL DEFAULT 0, `shoots` int NOT NULL DEFAULT 0, `hits` int NOT NULL DEFAULT 0, `headshots` int NOT NULL DEFAULT 0, `assists` int NOT NULL DEFAULT 0, `round_win` int NOT NULL DEFAULT 0, `round_lose` int NOT NULL DEFAULT 0, `playtime` int NOT NULL DEFAULT 0, `lastconnect` int NOT NULL DEFAULT 0);";
         public override string ModuleAuthor => PluginAuthor;
         public override string ModuleName => PluginName;
@@ -1569,6 +1593,7 @@ namespace RanksPointsNamespace
         public string? DbPassword { get; set; }
         public string? DbName { get; set; }
         public string? DbPort { get; set; }
+        public string? Name { get; set; } = "lvl_base";
 
         public static DatabaseConfig ReadFromJsonFile(string filePath)
         {
