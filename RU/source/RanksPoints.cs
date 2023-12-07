@@ -24,7 +24,7 @@ namespace RanksPointsNamespace
     {
         private const string PluginAuthor = "ABKAM";
         private const string PluginName = "[RanksPoints] by ABKAM";
-        private const string PluginVersion = "2.0.2";
+        private const string PluginVersion = "2.0.3";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -117,6 +117,7 @@ namespace RanksPointsNamespace
             public int Id { get; set; }
             public string? Name { get; set; }
             public int MinExperience { get; set; } 
+            public string ClanTag { get; set; }
         }
         public void SaveConfig(PluginConfig config, string filePath)
         {
@@ -263,24 +264,24 @@ namespace RanksPointsNamespace
             {
                 var defaultRanks = new List<RankConfig>
                 {
-                    new RankConfig { Id = 0, Name = "Серебро - I", MinExperience = 0 },
-                    new RankConfig { Id = 1, Name = "Серебро - II", MinExperience = 10 },
-                    new RankConfig { Id = 2, Name = "Серебро - III", MinExperience = 25 },
-                    new RankConfig { Id = 3, Name = "Серебро - IV", MinExperience = 50 },
-                    new RankConfig { Id = 4, Name = "Серебро Элита", MinExperience = 75 },
-                    new RankConfig { Id = 5, Name = "Серебро - Великий Магистр", MinExperience = 100 },
-                    new RankConfig { Id = 6, Name = "Золотая Звезда - I", MinExperience = 150 },
-                    new RankConfig { Id = 7, Name = "Золотая Звезда - II", MinExperience = 200 },
-                    new RankConfig { Id = 8, Name = "Золотая Звезда - III", MinExperience = 300 },
-                    new RankConfig { Id = 9, Name = "Золотая Звезда - Магистр", MinExperience = 500 },                                                                                                                                            
-                    new RankConfig { Id = 10, Name = "Магистр-хранитель - I", MinExperience = 750 },  
-                    new RankConfig { Id = 11, Name = "Магистр-хранитель - II", MinExperience = 1000 },  
-                    new RankConfig { Id = 12, Name = "Магистр-хранитель - Элита", MinExperience = 1500 },  
-                    new RankConfig { Id = 13, Name = "Заслуженный Магистр-хранитель", MinExperience = 2000 },  
-                    new RankConfig { Id = 14, Name = "Легендарный Беркут", MinExperience = 3000 },  
-                    new RankConfig { Id = 15, Name = "Легендарный Беркут-магистр", MinExperience = 5000 },
-                    new RankConfig { Id = 16, Name = "Великий Магистр - Высшего Ранга", MinExperience = 7500 },
-                    new RankConfig { Id = 17, Name = "Всемирная Элита", MinExperience = 10000 },  
+                    new RankConfig { Id = 0, Name = "Серебро - I", MinExperience = 0, ClanTag = "[Серебро - I]" },
+                    new RankConfig { Id = 1, Name = "Серебро - II", MinExperience = 10, ClanTag = "[Серебро - II]" },
+                    new RankConfig { Id = 2, Name = "Серебро - III", MinExperience = 25, ClanTag = "[Серебро - III]" },
+                    new RankConfig { Id = 3, Name = "Серебро - IV", MinExperience = 50, ClanTag = "[Серебро - IV]" },
+                    new RankConfig { Id = 4, Name = "Серебро Элита", MinExperience = 75, ClanTag = "[Серебро Элита]" },
+                    new RankConfig { Id = 5, Name = "Серебро - Великий Магистр", MinExperience = 100, ClanTag = "[Серебро - ВМ]" },
+                    new RankConfig { Id = 6, Name = "Золотая Звезда - I", MinExperience = 150, ClanTag = "[Золотая Звезда - I]" },
+                    new RankConfig { Id = 7, Name = "Золотая Звезда - II", MinExperience = 200, ClanTag = "[Золотая Звезда - II]" },
+                    new RankConfig { Id = 8, Name = "Золотая Звезда - III", MinExperience = 300, ClanTag = "[Золотая Звезда - III]" },
+                    new RankConfig { Id = 9, Name = "Золотая Звезда - Магистр", MinExperience = 500, ClanTag = "[Золотая Звезда - М]" },
+                    new RankConfig { Id = 10, Name = "Магистр-хранитель - I", MinExperience = 750, ClanTag = "[Магистр-хранитель - I]" },
+                    new RankConfig { Id = 11, Name = "Магистр-хранитель - II", MinExperience = 1000, ClanTag = "[Магистр-хранитель - II]" },
+                    new RankConfig { Id = 12, Name = "Магистр-хранитель - Элита", MinExperience = 1500, ClanTag = "[Магистр-хранитель - Э]" },
+                    new RankConfig { Id = 13, Name = "Заслуженный Магистр-хранитель", MinExperience = 2000, ClanTag = "[Заслуженный М-х]" },
+                    new RankConfig { Id = 14, Name = "Легендарный Беркут", MinExperience = 3000, ClanTag = "[Легендарный Беркут]" },
+                    new RankConfig { Id = 15, Name = "Легендарный Беркут-магистр", MinExperience = 5000, ClanTag = "[Лег. Беркут-м]" },
+                    new RankConfig { Id = 16, Name = "Великий Магистр - Высшего Ранга", MinExperience = 7500, ClanTag = "[Великий М-ВР]" },
+                    new RankConfig { Id = 17, Name = "Всемирная Элита", MinExperience = 10000, ClanTag = "[Всемирная Элита]" }
                 };
 
                 var serializer = new SerializerBuilder()
@@ -309,7 +310,34 @@ namespace RanksPointsNamespace
                 return new List<RankConfig>();
             }
         }
+        private async void SetPlayerClanTag(CCSPlayerController player)
+        {
+            if (player == null || !player.IsValid || player.IsBot || player.IsHLTV)
+            {
+                return;
+            }
+            try
+            {
+                var steamID64 = player.SteamID.ToString();
+                var rank = await GetCurrentRankAsync(steamID64);
 
+                ExecuteOnMainThread(() => 
+                {
+                    if (player != null && player.IsValid && rank != null && !string.IsNullOrEmpty(rank.ClanTag))
+                    {
+                        player.Clan = rank.ClanTag;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[SetPlayerClanTag] Не удалось установить клан-тег: игрок или ранг отсутствует.");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SetPlayerClanTag] Ошибка при получении ранга: {ex.Message}");
+            }
+        }
 
         public static string ConvertSteamID64ToSteamID(string steamId64)
         {
@@ -369,6 +397,7 @@ namespace RanksPointsNamespace
                 HandleAsyncOperation(updateTask);
 
                 activePlayers.Add(steamId);  
+                SetPlayerClanTag(player);
             }
         }
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
@@ -386,7 +415,12 @@ namespace RanksPointsNamespace
             return HookResult.Continue;
         }
         private HookResult OnBombExploded(EventBombExploded eventBombPlanted, GameEventInfo info)
-        {      
+        { 
+            if (GetActivePlayerCount() < config.MinPlayersForExperience)
+            {
+                return HookResult.Continue;
+            }   
+
             var planterSteamId64 = eventBombPlanted.Userid.SteamID.ToString();
             var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
 
@@ -626,6 +660,11 @@ namespace RanksPointsNamespace
         }
         private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
         {
+            if (deathEvent.Userid.IsBot || (deathEvent.Attacker != null && deathEvent.Attacker.IsBot))
+            {
+                return HookResult.Continue; // Не обрабатываем событие для ботов
+            }
+
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
             {
                 return HookResult.Continue;
@@ -747,6 +786,10 @@ namespace RanksPointsNamespace
 
         private async Task<int> AddOrRemovePointsAsync(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
+            if (string.IsNullOrEmpty(steamId))
+            {
+                return 0; // Возвращаем 0, так как steamId недействителен
+            }        
             // Обеспечиваем наличие объекта семафора для каждого игрока
             if (!playerSemaphores.ContainsKey(steamId))
             {
@@ -854,15 +897,13 @@ namespace RanksPointsNamespace
                 }
                 else
                 {
-                    break; // Прерываем цикл, так как все последующие ранги будут требовать больше очков
+                    break; // Прерываем цикл
                 }
             }
 
-            // Проверяем, был ли найден новый ранг
             if (newRankIndex != -1)
             {
                 var newRank = ranksConfig[newRankIndex];
-
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
@@ -874,6 +915,13 @@ namespace RanksPointsNamespace
                         var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
 
+                        // Обновляем клан-тег игрока
+                        var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
+                        if (player != null)
+                        {
+                            SetPlayerClanTag(player);
+                        }
+
                         bool isRankUp = newRank.Id > currentRankId;
                         ExecuteOnMainThread(() => NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp));
                         return true;
@@ -882,7 +930,6 @@ namespace RanksPointsNamespace
             }
             return false;
         }
-
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
             string steamId64 = ConvertSteamIDToSteamID64(steamId);
