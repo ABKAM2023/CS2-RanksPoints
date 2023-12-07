@@ -153,60 +153,78 @@ RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks 
 ```
 # Rank Configuration (settings_ranks.yml)
 ```
-- id: 1
-  name: Silver - I
+- id: 0
+  name: Серебро - I
   minExperience: 0
-- id: 2
-  name: Silver - II
+  clanTag: '[Серебро - I]'
+- id: 1
+  name: Серебро - II
   minExperience: 10
-- id: 3
-  name: Silver - III
+  clanTag: '[Серебро - II]'
+- id: 2
+  name: Серебро - III
   minExperience: 25
-- id: 4
-  name: Silver - IV
+  clanTag: '[Серебро - III]'
+- id: 3
+  name: Серебро - IV
   minExperience: 50
-- id: 5
-  name: Silver Elite
+  clanTag: '[Серебро - IV]'
+- id: 4
+  name: Серебро Элита
   minExperience: 75
-- id: 6
-  name: Silver - Grand Master
+  clanTag: '[Серебро Элита]'
+- id: 5
+  name: Серебро - Великий Магистр
   minExperience: 100
-- id: 7
-  name: Gold Star - I
+  clanTag: '[Серебро - ВМ]'
+- id: 6
+  name: Золотая Звезда - I
   minExperience: 150
-- id: 8
-  name: Gold Star - II
+  clanTag: '[Золотая Звезда - I]'
+- id: 7
+  name: Золотая Звезда - II
   minExperience: 200
-- id: 9
-  name: Gold Star - III
+  clanTag: '[Золотая Звезда - II]'
+- id: 8
+  name: Золотая Звезда - III
   minExperience: 300
-- id: 10
-  name: Gold Star - Master
+  clanTag: '[Золотая Звезда - III]'
+- id: 9
+  name: Золотая Звезда - Магистр
   minExperience: 500
-- id: 11
-  name: Master Guardian - I
+  clanTag: '[Золотая Звезда - М]'
+- id: 10
+  name: Магистр-хранитель - I
   minExperience: 750
-- id: 12
-  name: Master Guardian - II
+  clanTag: '[Магистр-хранитель - I]'
+- id: 11
+  name: Магистр-хранитель - II
   minExperience: 1000
-- id: 13
-  name: Master Guardian - Elite
+  clanTag: '[Магистр-хранитель - II]'
+- id: 12
+  name: Магистр-хранитель - Элита
   minExperience: 1500
-- id: 14
-  name: Distinguished Master Guardian
+  clanTag: '[Магистр-хранитель - Э]'
+- id: 13
+  name: Заслуженный Магистр-хранитель
   minExperience: 2000
-- id: 15
-  name: Legendary Eagle
+  clanTag: '[Заслуженный М-х]'
+- id: 14
+  name: Легендарный Беркут
   minExperience: 3000
-- id: 16
-  name: Legendary Eagle Master
+  clanTag: '[Легендарный Беркут]'
+- id: 15
+  name: Легендарный Беркут-магистр
   minExperience: 5000
-- id: 17
-  name: Supreme Master - Highest Rank
+  clanTag: '[Лег. Беркут-м]'
+- id: 16
+  name: Великий Магистр - Высшего Ранга
   minExperience: 7500
-- id: 18
-  name: Global Elite
+  clanTag: '[Великий М-ВР]'
+- id: 17
+  name: Всемирная Элита
   minExperience: 10000
+  clanTag: '[Всемирная Элита]'
 ```
 
 # Database Connection Configuration (dbconfig.json)
