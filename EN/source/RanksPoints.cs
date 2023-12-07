@@ -659,7 +659,7 @@ namespace RanksPointsNamespace
         {
             if (deathEvent.Userid.IsBot || (deathEvent.Attacker != null && deathEvent.Attacker.IsBot))
             {
-                return HookResult.Continue; // Не обрабатываем событие для ботов
+                return HookResult.Continue; 
             }
 
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
@@ -785,9 +785,8 @@ namespace RanksPointsNamespace
         {
             if (string.IsNullOrEmpty(steamId))
             {
-                return 0; // Возвращаем 0, так как steamId недействителен
+                return 0;
             }        
-            // Обеспечиваем наличие объекта семафора для каждого игрока
             if (!playerSemaphores.ContainsKey(steamId))
             {
                 playerSemaphores[steamId] = new SemaphoreSlim(1, 1);
@@ -795,7 +794,6 @@ namespace RanksPointsNamespace
 
             int updatedPoints = 0;
 
-            // Используем семафор для синхронизированного доступа к данным игрока
             await playerSemaphores[steamId].WaitAsync();
 
             try
@@ -829,7 +827,6 @@ namespace RanksPointsNamespace
                     }
                 }
 
-                // Обновление UI в главном потоке
                 ExecuteOnMainThread(() => {
                     if (playerController != null && playerController.IsValid && !playerController.IsBot)
                     {
@@ -885,7 +882,6 @@ namespace RanksPointsNamespace
             var ranksConfig = LoadRanksConfig();
             var newRankIndex = -1;
 
-            // Находим наивысший доступный ранг
             for (int i = 0; i < ranksConfig.Count; i++)
             {
                 if (updatedPoints >= ranksConfig[i].MinExperience)
@@ -894,7 +890,7 @@ namespace RanksPointsNamespace
                 }
                 else
                 {
-                    break; // Прерываем цикл
+                    break; 
                 }
             }
 
@@ -912,7 +908,6 @@ namespace RanksPointsNamespace
                         var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
 
-                        // Обновляем клан-тег игрока
                         var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
                         if (player != null)
                         {
