@@ -44,16 +44,20 @@ namespace RanksPointsNamespace
             public int PointsForNoScopeAWP { get; set; } = 1; 
             public int PointsForHeadshot { get; set; } = 1;
             public int PointsForBombDefusal { get; set; } = 2; 
-            public int PointsForBombPlanting { get; set; } = 2; 
-            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to earn experience.";
-            public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Your experience: {COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]";
+            public int PointsForBombExploded { get; set; } = 2; 
+            public int PointsForBombPlanting { get; set; } = 2;
+            public int PointsForBombDropping { get; set; } = -2;
+            public int PointsForBombPickup { get; set; } = 1;     
+            public int PointsForWallbang { get; set; } = 3;
+            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players required to earn experience.";
+            public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Your experience:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]";
             public string SuicideMessage { get; set; } = "suicide";
             public string SuicideMessageColor { get; set; } = "{Red}";
             public string DeathMessage { get; set; } = "death";
             public string DeathMessageColor { get; set; } = "{Red}";
             public string KillMessage { get; set; } = "kill";
             public string KillMessageColor { get; set; } = "{Green}";
-            public string NoScopeAWPMessage { get; set; } = "kill with AWP without scope";
+            public string NoScopeAWPMessage { get; set; } = "kill with AWP without a scope";
             public string NoScopeAWPMessageColor { get; set; } = "{Blue}";
             public string HeadshotMessage { get; set; } = "headshot";
             public string HeadshotMessageColor { get; set; } = "{Yellow}";
@@ -67,49 +71,57 @@ namespace RanksPointsNamespace
             public string MVPMessageColor { get; set; } = "{Gold}";
             public string BombDefusalMessage { get; set; } = "bomb defusal";
             public string BombDefusalMessageColor { get; set; } = "{Green}";
+            public string BombExplodedMessage { get; set; } = "bomb explosion";
+            public string BombExplodedMessageColor { get; set; } = "{Green}";
             public string BombPlantingMessage { get; set; } = "bomb planting";
             public string BombPlantingMessageColor { get; set; } = "{Green}";
-            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Server Time: {Gold}{PLAY_TIME}";
+            public string BombDroppingMessage { get; set; } = "bomb dropping";
+            public string BombDroppingMessageColor { get; set; } = "{Red}";
+            public string BombPickupMessage { get; set; } = "bomb pickup";
+            public string BombPickupMessageColor { get; set; } = "{Green}";
+            public string WallbangMessage { get; set; } = "wallbang kill";
+            public string WallbangMessageColor { get; set; } = "{Purple}";
+            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Place: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}";
             public string TimeFormat { get; set; } = "{0}d {1}h {2}min";
-            public string TopCommandIntroMessage { get; set; } = "[ {Blue}Top Players{White} ]";
+            public string TopCommandIntroMessage { get; set; } = "[ {Blue}Top players{White} ]";
             public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} points{White}";
             public string TopCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players.";
             public string TopCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopKillsCommandIntroMessage { get; set; } = "[ {Green}Top Players by Kills{White} ]";
+            public string TopKillsCommandIntroMessage { get; set; } = "[ {Green}Top players by kills{White} ]";
             public string TopKillsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Green}{KILLS} kills{White}";
             public string TopKillsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by kills.";
             public string TopKillsCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopDeathsCommandIntroMessage { get; set; } = "[ {Red}Top Players by Deaths{White} ]";
-            public string TopDeathsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Red}{DEATHS} deaths{White}";
+            public string TopDeathsCommandIntroMessage { get; set; } = "[ {Red}Top players by deaths{White} ]";
+            public string TopDeathsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Red}{DEATHS} deaths{White}";
             public string TopDeathsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by deaths.";
             public string TopDeathsCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopKDRCommandIntroMessage { get; set; } = "[ {Yellow}Top Players by KDR{White} ]";
-            public string TopKDRCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Yellow}KDR: {KDR}";
+            public string TopKDRCommandIntroMessage { get; set; } = "[ {Yellow}Top players by KDR{White} ]";
+            public string TopKDRCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}";
             public string TopKDRCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by KDR.";
             public string TopKDRCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top Players by Server Time{White} ]";
+            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top players by time on server{White} ]";
             public string TopTimeCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}";
-            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by server time.";
+            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by time on server.";
             public string TopTimeCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
             public string TopTimeFormat { get; set; } = "{0}d {1}h {2}min";
-            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can reset your stats only once every 3 hours.";
+            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can only reset your stats once every 3 hours.";
             public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your stats have been reset.";
             public double ResetStatsCooldownHours { get; set; } = 3.0;
-            public string RanksCommandIntroMessage { get; set; } = "[ {Gold}List of Ranks{White} ]";
+            public string RanksCommandIntroMessage { get; set; } = "[ {Gold}List of ranks{White} ]";
             public string RanksCommandRankMessage { get; set; } = "{NAME} - {Green}{EXPERIENCE} experience{White}";
             public string RanksCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on ranks.";
             public string RanksCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string LvlCommandIntroMessage { get; set; } = "[ {Gold}List of Available Commands{White} ]";
-            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Shows your current rank and stats";
-            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Shows the top 10 players by points";
-            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Shows the top 10 players by kills";
-            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Shows the top 10 players by deaths";
-            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Shows the top 10 players by KDR";
-            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Shows the top 10 players by server time";
+            public string LvlCommandIntroMessage { get; set; } = "[ {Gold}List of available commands{White} ]";
+            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Shows your current rank and statistics";
+            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Shows the top-10 players by points";
+            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Shows the top-10 players by kills";
+            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Shows the top-10 players by deaths";
+            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Shows the top-10 players by KDR";
+            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Shows the top-10 players by time on server";
             public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Reset your stats (can be used once every 3 hours)";
             public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Shows a list of all ranks and the experience needed to achieve them";
-            public string RankUpMessage { get; set; } = "Your rank has been upgraded to {RANK_NAME}!";
-            public string RankDownMessage { get; set; } = "Your rank has been downgraded to {RANK_NAME}.";
+            public string RankUpMessage { get; set; } = "Your rank has been increased to {RANK_NAME}!";
+            public string RankDownMessage { get; set; } = "Your rank has been decreased to {RANK_NAME}.";
         } 
         public class RankConfig
         {
@@ -124,28 +136,32 @@ namespace RanksPointsNamespace
 
             stringBuilder.AppendLine("# Configuration file for RankPointsPlugin");
 
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for a kill - the number of points added to a player for killing an opponent.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for kill - the number of points added to a player for killing an opponent.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Points deducted for death - the number of points deducted from a player for dying.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for an assist - the number of points added to a player for assisting in a kill.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for assist - the number of points added to a player for assisting in a kill.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Points for suicide - the number of points deducted from a player for committing suicide.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for a headshot - additional points for killing with a headshot.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for a round win - the number of points added to a player for their team's victory in a round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for a round loss - the number of points deducted from a player for their team's loss in a round.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for headshot - additional points for a kill with a headshot.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for round win - the number of points added to a player for their team's victory in a round.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for round loss - the number of points deducted from a player for their team's loss in a round.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Points for MVP - the number of points added to a player for earning the MVP title of the round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for a kill with AWP without scope - additional points for a kill without using the scope.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for kill with AWP without scope - additional points for a kill without using a scope.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Points for bomb defusal");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Points for planting a bomb");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank promotion.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank demotion.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombExploded), config.PointsForBombExploded, "Points for bomb explosion");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank increase.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank decrease.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Points for bomb planting - the number of points added to a player for successfully planting a bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDropping), config.PointsForBombDropping, "Points for bomb dropping - the number of points deducted from a player for dropping the bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPickup), config.PointsForBombPickup, "Points for bomb pickup - the number of points added to a player for picking up the bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForWallbang), config.PointsForWallbang, "Points for wallbang kill.");
 
-            stringBuilder.AppendLine("# Minimum number of players required for experience accrual - experience is awarded only if this number of players is present on the server.");
+            stringBuilder.AppendLine("# Minimum number of players required for experience points - players earn experience only if at least this number of players are playing on the server.");
             stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{EscapeMessage(config.GetActivePlayerCountMsg)}\"");
             AppendConfigValue(stringBuilder, nameof(config.MinPlayersForExperience), config.MinPlayersForExperience);
 
             stringBuilder.AppendLine();
-            stringBuilder.AppendLine("# Messages for gaining experience");
+            stringBuilder.AppendLine("# Messages upon gaining experience");                  
             stringBuilder.AppendLine($"PointsChangeMessage: \"{EscapeMessage(config.PointsChangeMessage)}\"");
-            stringBuilder.AppendLine("# Events");
+            stringBuilder.AppendLine("# Events");             
             stringBuilder.AppendLine($"SuicideMessage: \"{EscapeMessage(config.SuicideMessage)}\"");
             stringBuilder.AppendLine($"SuicideMessageColor: \"{EscapeMessage(config.SuicideMessageColor)}\"");
             stringBuilder.AppendLine($"DeathMessage: \"{EscapeMessage(config.DeathMessage)}\"");
@@ -166,8 +182,17 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"MVPMessageColor: \"{EscapeMessage(config.MVPMessageColor)}\"");     
             stringBuilder.AppendLine($"BombDefusalMessage: \"{EscapeMessage(config.BombDefusalMessage)}\"");
             stringBuilder.AppendLine($"BombDefusalMessageColor: \"{EscapeMessage(config.BombDefusalMessageColor)}\"");   
+            stringBuilder.AppendLine($"BombExplodedMessage: \"{EscapeMessage(config.BombExplodedMessage)}\"");
+            stringBuilder.AppendLine($"BombExplodedMessageColor: \"{EscapeMessage(config.BombExplodedMessageColor)}\"");       
             stringBuilder.AppendLine($"BombPlantingMessage: \"{EscapeMessage(config.BombPlantingMessage)}\"");
             stringBuilder.AppendLine($"BombPlantingMessageColor: \"{EscapeMessage(config.BombPlantingMessageColor)}\"");       
+            stringBuilder.AppendLine($"BombDroppingMessage: \"{EscapeMessage(config.BombDroppingMessage)}\"");
+            stringBuilder.AppendLine($"BombDroppingMessageColor: \"{EscapeMessage(config.BombDroppingMessageColor)}\"");    
+            stringBuilder.AppendLine($"BombPickupMessage: \"{EscapeMessage(config.BombPickupMessage)}\"");
+            stringBuilder.AppendLine($"BombPickupMessageColor: \"{EscapeMessage(config.BombPickupMessageColor)}\"");
+            stringBuilder.AppendLine($"WallbangMessage: \"{EscapeMessage(config.WallbangMessage)}\"");
+            stringBuilder.AppendLine($"WallbangMessageColor: \"{EscapeMessage(config.WallbangMessageColor)}\"");            
+
             
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# !rank");
@@ -242,6 +267,8 @@ namespace RanksPointsNamespace
         {
             return message.Replace("\"", "\\\"").Replace("\n", "\\n");
         }
+        public List<WeaponPoints> WeaponPointsConfig { get; set; }
+        private List<WeaponPoints> weaponPointsConfig;
 
         private void AppendConfigValueWithComment(StringBuilder sb, string key, object value, string comment)
         {
@@ -265,19 +292,19 @@ namespace RanksPointsNamespace
                     new RankConfig { Id = 1, Name = "Silver - II", MinExperience = 10, ClanTag = "[Silver - II]" },
                     new RankConfig { Id = 2, Name = "Silver - III", MinExperience = 25, ClanTag = "[Silver - III]" },
                     new RankConfig { Id = 3, Name = "Silver - IV", MinExperience = 50, ClanTag = "[Silver - IV]" },
-                    new RankConfig { Id = 4, Name = "Elite Silver", MinExperience = 75, ClanTag = "[Elite Silver]" },
-                    new RankConfig { Id = 5, Name = "Silver - Grand Master", MinExperience = 100, ClanTag = "[Silver - GM]" },
+                    new RankConfig { Id = 4, Name = "Silver Elite", MinExperience = 75, ClanTag = "[Silver Elite]" },
+                    new RankConfig { Id = 5, Name = "Silver - Master Guardian", MinExperience = 100, ClanTag = "[Silver - MG]" },
                     new RankConfig { Id = 6, Name = "Gold Star - I", MinExperience = 150, ClanTag = "[Gold Star - I]" },
                     new RankConfig { Id = 7, Name = "Gold Star - II", MinExperience = 200, ClanTag = "[Gold Star - II]" },
                     new RankConfig { Id = 8, Name = "Gold Star - III", MinExperience = 300, ClanTag = "[Gold Star - III]" },
                     new RankConfig { Id = 9, Name = "Gold Star - Master", MinExperience = 500, ClanTag = "[Gold Star - M]" },
                     new RankConfig { Id = 10, Name = "Master Guardian - I", MinExperience = 750, ClanTag = "[Master Guardian - I]" },
                     new RankConfig { Id = 11, Name = "Master Guardian - II", MinExperience = 1000, ClanTag = "[Master Guardian - II]" },
-                    new RankConfig { Id = 12, Name = "Master Guardian - Elite", MinExperience = 1500, ClanTag = "[Master Guardian - E]" },
+                    new RankConfig { Id = 12, Name = "Master Guardian Elite", MinExperience = 1500, ClanTag = "[Master Guardian Elite]" },
                     new RankConfig { Id = 13, Name = "Distinguished Master Guardian", MinExperience = 2000, ClanTag = "[Distinguished MG]" },
                     new RankConfig { Id = 14, Name = "Legendary Eagle", MinExperience = 3000, ClanTag = "[Legendary Eagle]" },
                     new RankConfig { Id = 15, Name = "Legendary Eagle Master", MinExperience = 5000, ClanTag = "[Legendary Eagle M]" },
-                    new RankConfig { Id = 16, Name = "Supreme Master - First Class", MinExperience = 7500, ClanTag = "[Supreme Master - F]" },
+                    new RankConfig { Id = 16, Name = "Supreme Master First Class", MinExperience = 7500, ClanTag = "[Supreme M-FC]" },
                     new RankConfig { Id = 17, Name = "Global Elite", MinExperience = 10000, ClanTag = "[Global Elite]" }
                 };
 
@@ -332,7 +359,7 @@ namespace RanksPointsNamespace
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SetPlayerClanTag] Error while fetching rank: {ex.Message}");
+                Console.WriteLine($"[SetPlayerClanTag] Error while getting rank: {ex.Message}");
             }
         }
 
@@ -346,6 +373,7 @@ namespace RanksPointsNamespace
             }
             return null; 
         }
+        private bool isWarmup = true;
         public override void Load(bool hotReload)
         {
             base.Load(hotReload);
@@ -361,14 +389,71 @@ namespace RanksPointsNamespace
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventBombExploded>(OnBombExploded);
             RegisterEventHandler<EventBombDefused>(OnBombDefused);
+            RegisterEventHandler<EventRoundAnnounceMatchStart>(OnMatchStart);
+            RegisterEventHandler<EventRoundAnnounceWarmup>(OnWarmupStart);      
+            RegisterEventHandler<EventBombPlanted>(OnBombPlanted);      
+            RegisterEventHandler<EventBombDropped>(OnBombDropped);
+            RegisterEventHandler<EventBombPickup>(OnBombPickup);
             isActiveRoundForPoints = true; 
             CreateTable();
             config = LoadOrCreateConfig();
             LoadRanksConfig();
+            weaponPointsConfig = LoadWeaponPointsConfig();
 
             CreateDbConfigIfNotExists();
             dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));            
         }
+        private HookResult OnBombPickup(EventBombPickup bombPickupEvent, GameEventInfo info)
+        {
+            if (isWarmup)
+            {
+                return HookResult.Continue;
+            }
+
+            var pickerSteamId64 = bombPickupEvent.Userid.SteamID.ToString();
+            var pickerSteamId = ConvertSteamID64ToSteamID(pickerSteamId64);
+
+            if (config.PointsForBombPickup != 0)
+            {
+                string BombPickupMessageColor = ReplaceColorPlaceholders(config.BombPickupMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(pickerSteamId, config.PointsForBombPickup, bombPickupEvent.Userid, config.BombPickupMessage, BombPickupMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }    
+        private HookResult OnBombDropped(EventBombDropped bombDroppedEvent, GameEventInfo info)
+        {
+            var dropperSteamId64 = bombDroppedEvent.Userid.SteamID.ToString();
+            var dropperSteamId = ConvertSteamID64ToSteamID(dropperSteamId64);
+
+            if (config.PointsForBombDropping != 0)
+            {
+                string BombDroppingMessageColor = ReplaceColorPlaceholders(config.BombDroppingMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(dropperSteamId, config.PointsForBombDropping, bombDroppedEvent.Userid, config.BombDroppingMessage, BombDroppingMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }
+        private HookResult OnBombPlanted(EventBombPlanted bombPlantedEvent, GameEventInfo info)
+        {
+            var planterSteamId64 = bombPlantedEvent.Userid.SteamID.ToString();
+            var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
+
+            if (config.PointsForBombPlanting != 0)
+            {
+                string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombPlanting, bombPlantedEvent.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }
+
         private async Task UpdatePlayerConnectionAsync(string steamId, string playerName, long currentTime)
         {
             using (var connection = new MySqlConnection(ConnectionString))
@@ -399,7 +484,14 @@ namespace RanksPointsNamespace
         }
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
         {
-            isActiveRoundForPoints = GetActivePlayerCount() >= config.MinPlayersForExperience;
+            if (isWarmup)
+            {
+                isActiveRoundForPoints = false;
+            }
+            else
+            {
+                isActiveRoundForPoints = GetActivePlayerCount() >= config.MinPlayersForExperience;
+            }
 
             if (!isActiveRoundForPoints)
             {
@@ -411,6 +503,17 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
+        private HookResult OnMatchStart(EventRoundAnnounceMatchStart matchStartEvent, GameEventInfo info)
+        {
+            isWarmup = false;
+            return HookResult.Continue;
+        }
+
+        private HookResult OnWarmupStart(EventRoundAnnounceWarmup warmupStartEvent, GameEventInfo info)
+        {
+            isWarmup = true;
+            return HookResult.Continue;
+        }        
         private HookResult OnBombExploded(EventBombExploded eventBombPlanted, GameEventInfo info)
         { 
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
@@ -421,11 +524,11 @@ namespace RanksPointsNamespace
             var planterSteamId64 = eventBombPlanted.Userid.SteamID.ToString();
             var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
 
-            if (config.PointsForBombPlanting != 0)
+            if (config.PointsForBombExploded != 0)
             {
-                string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
+                string BombExplodedMessageColor = ReplaceColorPlaceholders(config.BombExplodedMessageColor);       
 
-                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombPlanting, eventBombPlanted.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
+                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombExploded, eventBombPlanted.Userid, config.BombExplodedMessage, BombExplodedMessageColor);
                 HandleAsyncPointsOperation(pointsTask);
             }    
 
@@ -596,6 +699,11 @@ namespace RanksPointsNamespace
                 return HookResult.Continue;
             }
 
+            if (isWarmup) 
+            {
+                return HookResult.Continue;
+            }
+
             CsTeam winnerTeam = (CsTeam)roundEndEvent.Winner;
 
             for (int playerIndex = 0; playerIndex <= Server.MaxPlayers; playerIndex++) 
@@ -657,15 +765,21 @@ namespace RanksPointsNamespace
         }
         private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
         {
-            if (deathEvent.Userid.IsBot || (deathEvent.Attacker != null && deathEvent.Attacker.IsBot))
+            if (deathEvent?.Userid?.IsBot ?? true)
             {
-                return HookResult.Continue; 
+                return HookResult.Continue;
+            }
+
+            if (isWarmup)
+            {
+                return HookResult.Continue;
             }
 
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
             {
                 return HookResult.Continue;
             }
+            
             try
             {
                 var victimSteamId64 = deathEvent.Userid.SteamID.ToString();
@@ -719,7 +833,23 @@ namespace RanksPointsNamespace
                             HandleAsyncPointsOperation(headshotPointsTask);
                             var updateHeadshotsTask = UpdateHeadshotsAsync(killerSteamId);
                             HandleAsyncOperation(updateHeadshotsTask);
-                        }  
+                        } 
+                        
+                        if (deathEvent.Penetrated > 0 && config.PointsForWallbang != 0)
+                        {
+                            string wallbangMessageColor = ReplaceColorPlaceholders(config.WallbangMessageColor);
+                            var wallbangPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForWallbang, deathEvent.Attacker, config.WallbangMessage, wallbangMessageColor);
+                            HandleAsyncPointsOperation(wallbangPointsTask);
+                        }   
+
+                        var weaponConfig = weaponPointsConfig.FirstOrDefault(wp => wp.WeaponName == deathEvent.Weapon);
+                        if (weaponConfig != null)
+                        {
+                            string messageColor = ReplaceColorPlaceholders(weaponConfig.MessageColor);
+
+                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, weaponConfig.Points, deathEvent.Attacker, weaponConfig.KillMessage, messageColor);
+                            HandleAsyncPointsOperation(pointsTask);
+                        }                                         
                     }
                     if (deathEvent.Assister != null && IsValidPlayer(deathEvent.Assister) && config.PointsForAssist != 0)
                     {
@@ -731,7 +861,7 @@ namespace RanksPointsNamespace
                         HandleAsyncPointsOperation(assistPointsTask);
                         var updateAssistsTask = UpdateAssistsAsync(assisterSteamId);
                         HandleAsyncOperation(updateAssistsTask);
-                    }                                      
+                    }                                                          
                 }
             }
             catch (Exception ex)
@@ -785,8 +915,9 @@ namespace RanksPointsNamespace
         {
             if (string.IsNullOrEmpty(steamId))
             {
-                return 0;
+                return 0; 
             }        
+
             if (!playerSemaphores.ContainsKey(steamId))
             {
                 playerSemaphores[steamId] = new SemaphoreSlim(1, 1);
@@ -908,19 +1039,46 @@ namespace RanksPointsNamespace
                         var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
 
-                        var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
-                        if (player != null)
-                        {
-                            SetPlayerClanTag(player);
-                        }
-
                         bool isRankUp = newRank.Id > currentRankId;
-                        ExecuteOnMainThread(() => NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp));
+
+                        ExecuteOnMainThread(() => 
+                        {
+                            var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
+                            if (player != null)
+                            {
+                                SetPlayerClanTag(player);
+                                NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                            }
+                        });
+                        
                         return true;
                     }
                 }
             }
             return false;
+        }
+        private List<WeaponPoints> LoadWeaponPointsConfig()
+        {
+            var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
+
+            if (!File.Exists(filePath))
+            {
+                var defaultWeaponPoints = new List<WeaponPoints>
+                {
+                    new WeaponPoints { WeaponName = "knife", Points = 10, MessageColor = "{LightYellow}", KillMessage = "knife kill" },
+                    new WeaponPoints { WeaponName = "awp", Points = 5, MessageColor = "{Blue}", KillMessage = "precise AWP shot" }
+                };
+
+                var serializer = new SerializerBuilder().Build();
+                var yaml = serializer.Serialize(defaultWeaponPoints);
+                File.WriteAllText(filePath, yaml);
+
+                return defaultWeaponPoints;
+            }
+
+            var deserializer = new DeserializerBuilder().Build();
+            var yamlContents = File.ReadAllText(filePath);
+            return deserializer.Deserialize<List<WeaponPoints>>(yamlContents) ?? new List<WeaponPoints>();
         }
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
@@ -937,6 +1095,7 @@ namespace RanksPointsNamespace
                 }
             }
         }
+
         private string ConvertSteamIDToSteamID64(string steamID)
         {
             if (string.IsNullOrEmpty(steamID) || !steamID.StartsWith("STEAM_"))
@@ -1133,7 +1292,7 @@ namespace RanksPointsNamespace
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1185,7 +1344,7 @@ namespace RanksPointsNamespace
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1235,7 +1394,7 @@ namespace RanksPointsNamespace
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1285,7 +1444,7 @@ namespace RanksPointsNamespace
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1330,14 +1489,15 @@ namespace RanksPointsNamespace
             }
         }
 
-        [ConsoleCommand("toptime", "Displays the top 10 players by server playtime")]
+        [ConsoleCommand("toptime", "Displays the top 10 players by time on the server")]
         public void OnTopTimeCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
+
             try
             {
                 using (var connection = new MySqlConnection(ConnectionString))
@@ -1416,6 +1576,7 @@ namespace RanksPointsNamespace
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
+
         [ConsoleCommand("rp_reloadconfig", "Reloads the configuration file Config.yml")]
         public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1437,6 +1598,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat("This command is only available from the server console.");
             }
         }
+
         [ConsoleCommand("rp_reloadranks", "Reloads the configuration file settings_ranks.yaml")]
         public void ReloadRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1458,12 +1620,13 @@ namespace RanksPointsNamespace
                 player.PrintToChat("{Red}This command is only available from the server console.");
             }
         }
-        [ConsoleCommand("ranks", "Shows a list of all ranks and the experience required to achieve them")]
+
+        [ConsoleCommand("ranks", "Displays a list of all ranks and the experience required to achieve them")]
         public void OnRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by players.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1499,12 +1662,12 @@ namespace RanksPointsNamespace
             }
         }
      
-        [ConsoleCommand("lvl", "Shows a list of all available commands and their functions")]
+        [ConsoleCommand("lvl", "Displays a list of all available commands and their functions")]
         public void OnLvlCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by players.");
+                Console.WriteLine("Only players can use this command.");
                 return;
             }
 
@@ -1529,7 +1692,6 @@ namespace RanksPointsNamespace
             }
         }
 
-
         [ConsoleCommand("rp_resetranks", "Clears a player's statistics. Usage: rp_resetranks <steamid64> <data-type>")]
         [CommandHelper(minArgs: 2, usage: "<steamid64> <data-type>", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
         public void ResetRanksCommand(CCSPlayerController? player, CommandInfo command)
@@ -1552,7 +1714,7 @@ namespace RanksPointsNamespace
                     {
                         case "exp":
                             ResetPlayerExperience(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Player experience and rank for {steamId} (SteamID64: {steamId64}) have been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Experience and rank for player {steamId} (SteamID64: {steamId64}) have been reset.");
                             break;
                         case "stats":
                             ResetPlayerStats(steamId);
@@ -1560,7 +1722,7 @@ namespace RanksPointsNamespace
                             break;
                         case "time":
                             ResetPlayerPlaytime(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Player playtime for {steamId} (SteamID64: {steamId64}) has been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Playtime for player {steamId} (SteamID64: {steamId64}) has been reset.");
                             break;
                         default:
                             Console.WriteLine("Invalid data type. Use 'exp', 'stats', or 'time'.");
@@ -1577,7 +1739,6 @@ namespace RanksPointsNamespace
                 player.PrintToChat($"{ChatColors.Red}This command is only available from the server console.");
             }
         }
-
 
         private void ResetPlayerExperience(string steamId)
         {
@@ -1635,7 +1796,13 @@ namespace RanksPointsNamespace
         public override string ModuleName => PluginName;
         public override string ModuleVersion => PluginVersion;
     }
-
+    public class WeaponPoints
+    {
+        public string WeaponName { get; set; }
+        public int Points { get; set; }
+        public string MessageColor { get; set; }
+        public string KillMessage { get; set; }
+    }
     public class DatabaseConfig
     {
         public string? DbHost { get; set; }

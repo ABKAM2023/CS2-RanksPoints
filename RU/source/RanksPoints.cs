@@ -44,7 +44,11 @@ namespace RanksPointsNamespace
             public int PointsForNoScopeAWP { get; set; } = 1; 
             public int PointsForHeadshot { get; set; } = 1;
             public int PointsForBombDefusal { get; set; } = 2; 
-            public int PointsForBombPlanting { get; set; } = 2; 
+            public int PointsForBombExploded { get; set; } = 2; 
+            public int PointsForBombPlanting { get; set; } = 2;
+            public int PointsForBombDropping { get; set; } = -2;
+            public int PointsForBombPickup { get; set; } = 1;     
+            public int PointsForWallbang { get; set; } = 3;
             public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игроков для начисления опыта.";
             public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Ваш опыт:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} за {REASON}]";
             public string SuicideMessage { get; set; } = "самоубийство"; 
@@ -67,8 +71,16 @@ namespace RanksPointsNamespace
             public string MVPMessageColor { get; set; } = "{Gold}";    
             public string BombDefusalMessage { get; set; } = "обезвреживание бомбы";          
             public string BombDefusalMessageColor { get; set; } = "{Green}";     
-            public string BombPlantingMessage { get; set; } = "установку бомбы";             
-            public string BombPlantingMessageColor { get; set; } = "{Green}";          
+            public string BombExplodedMessage { get; set; } = "взрыв бомбы";             
+            public string BombExplodedMessageColor { get; set; } = "{Green}";   
+            public string BombPlantingMessage { get; set; } = "установку бомбы";
+            public string BombPlantingMessageColor { get; set; } = "{Green}";  
+            public string BombDroppingMessage { get; set; } = "выброс бомбы";
+            public string BombDroppingMessageColor { get; set; } = "{Red}"; 
+            public string BombPickupMessage { get; set; } = "поднятие бомбы";
+            public string BombPickupMessageColor { get; set; } = "{Green}";   
+            public string WallbangMessage { get; set; } = "прострел"; 
+            public string WallbangMessageColor { get; set; } = "{Purple}";                                               
             public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Звание: {Green}{RANK_NAME} {White}| Место: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Опыт: {Gold}{POINTS} {White}| Убийства: {Green}{KILLS} {White}| Смерти: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Время на сервере: {Gold}{PLAY_TIME}";                                                            
             public string TimeFormat { get; set; } = "{0}д {1}ч {2}мин";   
             public string TopCommandIntroMessage { get; set; } = "[ {Blue}Топ игроков{White} ]"; 
@@ -110,7 +122,6 @@ namespace RanksPointsNamespace
             public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Показывает список всех званий и опыта, необходимого для их получения";       
             public string RankUpMessage { get; set; } = "Ваше звание было повышено до {RANK_NAME}!";
             public string RankDownMessage { get; set; } = "Ваше звание было понижено до {RANK_NAME}.";
-
         } 
         public class RankConfig
         {
@@ -135,11 +146,13 @@ namespace RanksPointsNamespace
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Очки за MVP - количество очков, добавляемое игроку за получение звания MVP раунда.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Очки за убийство с AWP без прицела - дополнительные очки за убийство без использования прицела.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Очки за обезвреживание бомбы");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Очки за установку бомбы");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombExploded), config.PointsForBombExploded, "Очки за взрыв бомбы");
             AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Сообщение о повышении звания.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Сообщение о понижении звания.");
-
-
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Очки за установку бомбы - количество очков, добавляемое игроку за успешную установку бомбы.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDropping), config.PointsForBombDropping, "Очки за выброс бомбы - количество очков, вычитаемое у игрока за выброс бомбы.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPickup), config.PointsForBombPickup, "Очки за поднятие бомбы - количество очков, добавляемое игроку за поднятие бомбы.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForWallbang), config.PointsForWallbang, "Очки за убийство через прострел.");
 
             stringBuilder.AppendLine("# Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.");
             stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{EscapeMessage(config.GetActivePlayerCountMsg)}\"");
@@ -169,8 +182,17 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"MVPMessageColor: \"{EscapeMessage(config.MVPMessageColor)}\"");     
             stringBuilder.AppendLine($"BombDefusalMessage: \"{EscapeMessage(config.BombDefusalMessage)}\"");
             stringBuilder.AppendLine($"BombDefusalMessageColor: \"{EscapeMessage(config.BombDefusalMessageColor)}\"");   
+            stringBuilder.AppendLine($"BombExplodedMessage: \"{EscapeMessage(config.BombExplodedMessage)}\"");
+            stringBuilder.AppendLine($"BombExplodedMessageColor: \"{EscapeMessage(config.BombExplodedMessageColor)}\"");       
             stringBuilder.AppendLine($"BombPlantingMessage: \"{EscapeMessage(config.BombPlantingMessage)}\"");
             stringBuilder.AppendLine($"BombPlantingMessageColor: \"{EscapeMessage(config.BombPlantingMessageColor)}\"");       
+            stringBuilder.AppendLine($"BombDroppingMessage: \"{EscapeMessage(config.BombDroppingMessage)}\"");
+            stringBuilder.AppendLine($"BombDroppingMessageColor: \"{EscapeMessage(config.BombDroppingMessageColor)}\"");    
+            stringBuilder.AppendLine($"BombPickupMessage: \"{EscapeMessage(config.BombPickupMessage)}\"");
+            stringBuilder.AppendLine($"BombPickupMessageColor: \"{EscapeMessage(config.BombPickupMessageColor)}\"");
+            stringBuilder.AppendLine($"WallbangMessage: \"{EscapeMessage(config.WallbangMessage)}\"");
+            stringBuilder.AppendLine($"WallbangMessageColor: \"{EscapeMessage(config.WallbangMessageColor)}\"");            
+
             
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# !rank");
@@ -245,6 +267,8 @@ namespace RanksPointsNamespace
         {
             return message.Replace("\"", "\\\"").Replace("\n", "\\n");
         }
+        public List<WeaponPoints> WeaponPointsConfig { get; set; }
+        private List<WeaponPoints> weaponPointsConfig;
 
         private void AppendConfigValueWithComment(StringBuilder sb, string key, object value, string comment)
         {
@@ -349,6 +373,7 @@ namespace RanksPointsNamespace
             }
             return null; 
         }
+        private bool isWarmup = true;
         public override void Load(bool hotReload)
         {
             base.Load(hotReload);
@@ -364,14 +389,71 @@ namespace RanksPointsNamespace
             RegisterEventHandler<EventRoundStart>(OnRoundStart);
             RegisterEventHandler<EventBombExploded>(OnBombExploded);
             RegisterEventHandler<EventBombDefused>(OnBombDefused);
+            RegisterEventHandler<EventRoundAnnounceMatchStart>(OnMatchStart);
+            RegisterEventHandler<EventRoundAnnounceWarmup>(OnWarmupStart);      
+            RegisterEventHandler<EventBombPlanted>(OnBombPlanted);      
+            RegisterEventHandler<EventBombDropped>(OnBombDropped);
+            RegisterEventHandler<EventBombPickup>(OnBombPickup);
             isActiveRoundForPoints = true; 
             CreateTable();
             config = LoadOrCreateConfig();
             LoadRanksConfig();
+            weaponPointsConfig = LoadWeaponPointsConfig();
 
             CreateDbConfigIfNotExists();
             dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));            
         }
+        private HookResult OnBombPickup(EventBombPickup bombPickupEvent, GameEventInfo info)
+        {
+            if (isWarmup)
+            {
+                return HookResult.Continue;
+            }
+
+            var pickerSteamId64 = bombPickupEvent.Userid.SteamID.ToString();
+            var pickerSteamId = ConvertSteamID64ToSteamID(pickerSteamId64);
+
+            if (config.PointsForBombPickup != 0)
+            {
+                string BombPickupMessageColor = ReplaceColorPlaceholders(config.BombPickupMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(pickerSteamId, config.PointsForBombPickup, bombPickupEvent.Userid, config.BombPickupMessage, BombPickupMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }    
+        private HookResult OnBombDropped(EventBombDropped bombDroppedEvent, GameEventInfo info)
+        {
+            var dropperSteamId64 = bombDroppedEvent.Userid.SteamID.ToString();
+            var dropperSteamId = ConvertSteamID64ToSteamID(dropperSteamId64);
+
+            if (config.PointsForBombDropping != 0)
+            {
+                string BombDroppingMessageColor = ReplaceColorPlaceholders(config.BombDroppingMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(dropperSteamId, config.PointsForBombDropping, bombDroppedEvent.Userid, config.BombDroppingMessage, BombDroppingMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }
+        private HookResult OnBombPlanted(EventBombPlanted bombPlantedEvent, GameEventInfo info)
+        {
+            var planterSteamId64 = bombPlantedEvent.Userid.SteamID.ToString();
+            var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
+
+            if (config.PointsForBombPlanting != 0)
+            {
+                string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
+
+                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombPlanting, bombPlantedEvent.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
+                HandleAsyncPointsOperation(pointsTask);
+            }    
+
+            return HookResult.Continue;
+        }
+
         private async Task UpdatePlayerConnectionAsync(string steamId, string playerName, long currentTime)
         {
             using (var connection = new MySqlConnection(ConnectionString))
@@ -402,7 +484,14 @@ namespace RanksPointsNamespace
         }
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
         {
-            isActiveRoundForPoints = GetActivePlayerCount() >= config.MinPlayersForExperience;
+            if (isWarmup)
+            {
+                isActiveRoundForPoints = false;
+            }
+            else
+            {
+                isActiveRoundForPoints = GetActivePlayerCount() >= config.MinPlayersForExperience;
+            }
 
             if (!isActiveRoundForPoints)
             {
@@ -414,6 +503,17 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
+        private HookResult OnMatchStart(EventRoundAnnounceMatchStart matchStartEvent, GameEventInfo info)
+        {
+            isWarmup = false;
+            return HookResult.Continue;
+        }
+
+        private HookResult OnWarmupStart(EventRoundAnnounceWarmup warmupStartEvent, GameEventInfo info)
+        {
+            isWarmup = true;
+            return HookResult.Continue;
+        }        
         private HookResult OnBombExploded(EventBombExploded eventBombPlanted, GameEventInfo info)
         { 
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
@@ -424,11 +524,11 @@ namespace RanksPointsNamespace
             var planterSteamId64 = eventBombPlanted.Userid.SteamID.ToString();
             var planterSteamId = ConvertSteamID64ToSteamID(planterSteamId64);
 
-            if (config.PointsForBombPlanting != 0)
+            if (config.PointsForBombExploded != 0)
             {
-                string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
+                string BombExplodedMessageColor = ReplaceColorPlaceholders(config.BombExplodedMessageColor);       
 
-                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombPlanting, eventBombPlanted.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
+                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombExploded, eventBombPlanted.Userid, config.BombExplodedMessage, BombExplodedMessageColor);
                 HandleAsyncPointsOperation(pointsTask);
             }    
 
@@ -599,6 +699,11 @@ namespace RanksPointsNamespace
                 return HookResult.Continue;
             }
 
+            if (isWarmup) 
+            {
+                return HookResult.Continue;
+            }
+
             CsTeam winnerTeam = (CsTeam)roundEndEvent.Winner;
 
             for (int playerIndex = 0; playerIndex <= Server.MaxPlayers; playerIndex++) 
@@ -660,7 +765,12 @@ namespace RanksPointsNamespace
         }
         private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
         {
-            if (deathEvent.Userid.IsBot || (deathEvent.Attacker != null && deathEvent.Attacker.IsBot))
+            if (deathEvent?.Userid?.IsBot ?? true)
+            {
+                return HookResult.Continue;
+            }
+
+            if (isWarmup)
             {
                 return HookResult.Continue;
             }
@@ -669,6 +779,7 @@ namespace RanksPointsNamespace
             {
                 return HookResult.Continue;
             }
+            
             try
             {
                 var victimSteamId64 = deathEvent.Userid.SteamID.ToString();
@@ -722,7 +833,23 @@ namespace RanksPointsNamespace
                             HandleAsyncPointsOperation(headshotPointsTask);
                             var updateHeadshotsTask = UpdateHeadshotsAsync(killerSteamId);
                             HandleAsyncOperation(updateHeadshotsTask);
-                        }  
+                        } 
+                        
+                        if (deathEvent.Penetrated > 0 && config.PointsForWallbang != 0)
+                        {
+                            string wallbangMessageColor = ReplaceColorPlaceholders(config.WallbangMessageColor);
+                            var wallbangPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForWallbang, deathEvent.Attacker, config.WallbangMessage, wallbangMessageColor);
+                            HandleAsyncPointsOperation(wallbangPointsTask);
+                        }   
+
+                        var weaponConfig = weaponPointsConfig.FirstOrDefault(wp => wp.WeaponName == deathEvent.Weapon);
+                        if (weaponConfig != null)
+                        {
+                            string messageColor = ReplaceColorPlaceholders(weaponConfig.MessageColor);
+
+                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, weaponConfig.Points, deathEvent.Attacker, weaponConfig.KillMessage, messageColor);
+                            HandleAsyncPointsOperation(pointsTask);
+                        }                                         
                     }
                     if (deathEvent.Assister != null && IsValidPlayer(deathEvent.Assister) && config.PointsForAssist != 0)
                     {
@@ -734,7 +861,7 @@ namespace RanksPointsNamespace
                         HandleAsyncPointsOperation(assistPointsTask);
                         var updateAssistsTask = UpdateAssistsAsync(assisterSteamId);
                         HandleAsyncOperation(updateAssistsTask);
-                    }                                      
+                    }                                                          
                 }
             }
             catch (Exception ex)
@@ -912,19 +1039,46 @@ namespace RanksPointsNamespace
                         var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
 
-                        var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
-                        if (player != null)
-                        {
-                            SetPlayerClanTag(player);
-                        }
-
                         bool isRankUp = newRank.Id > currentRankId;
-                        ExecuteOnMainThread(() => NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp));
+
+                        ExecuteOnMainThread(() => 
+                        {
+                            var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
+                            if (player != null)
+                            {
+                                SetPlayerClanTag(player);
+                                NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                            }
+                        });
+                        
                         return true;
                     }
                 }
             }
             return false;
+        }
+        private List<WeaponPoints> LoadWeaponPointsConfig()
+        {
+            var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
+
+            if (!File.Exists(filePath))
+            {
+                var defaultWeaponPoints = new List<WeaponPoints>
+                {
+                    new WeaponPoints { WeaponName = "knife", Points = 10, MessageColor = "{LightYellow}", KillMessage = "убийство ножом" },
+                    new WeaponPoints { WeaponName = "awp", Points = 5, MessageColor = "{Blue}", KillMessage = "точный выстрел из AWP" }
+                };
+
+                var serializer = new SerializerBuilder().Build();
+                var yaml = serializer.Serialize(defaultWeaponPoints);
+                File.WriteAllText(filePath, yaml);
+
+                return defaultWeaponPoints;
+            }
+
+            var deserializer = new DeserializerBuilder().Build();
+            var yamlContents = File.ReadAllText(filePath);
+            return deserializer.Deserialize<List<WeaponPoints>>(yamlContents) ?? new List<WeaponPoints>();
         }
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
@@ -1643,7 +1797,13 @@ namespace RanksPointsNamespace
         public override string ModuleName => PluginName;
         public override string ModuleVersion => PluginVersion;
     }
-
+    public class WeaponPoints
+    {
+        public string WeaponName { get; set; }
+        public int Points { get; set; }
+        public string MessageColor { get; set; }
+        public string KillMessage { get; set; }
+    }
     public class DatabaseConfig
     {
         public string? DbHost { get; set; }
