@@ -25,50 +25,62 @@ The RanksPoints system is based on a simple principle: players perform various a
 # Main Configuration (Config.yml)
 ```
 # Configuration file for RankPointsPlugin
-# Points for kill - the number of points added to the player for killing an opponent.
+# Points for kill - the number of points added to a player for killing an opponent.
 PointsForKill: 5
 
-# Points deducted for death - the number of points subtracted from the player for dying.
+# Points deducted for death - the number of points deducted from a player for dying.
 PointsForDeath: -5
 
-# Points for assist - the number of points added to the player for assisting in a kill.
+# Points for assist - the number of points added to a player for assisting in a kill.
 PointsForAssist: 1
 
-# Points for suicide - the number of points subtracted from the player for committing suicide.
+# Points for suicide - the number of points deducted from a player for committing suicide.
 PointsForSuicide: -6
 
-# Points for headshot - additional points for killing with a headshot.
+# Points for headshot - additional points for a kill with a headshot.
 PointsForHeadshot: 1
 
-# Points for round win - the number of points added to the player for their team's victory in a round.
+# Points for round win - the number of points added to a player for their team's victory in a round.
 PointsPerRoundWin: 2
 
-# Points for round loss - the number of points subtracted from the player for their team's loss in a round.
+# Points for round loss - the number of points deducted from a player for their team's loss in a round.
 PointsPerRoundLoss: -2
 
-# Points for MVP - the number of points added to the player for receiving the MVP title of the round.
+# Points for MVP - the number of points added to a player for earning the MVP title of the round.
 PointsPerMVP: 3
 
-# Points for AWP no-scope kill - additional points for a kill without using the scope.
+# Points for kill with AWP without scope - additional points for a kill without using a scope.
 PointsForNoScopeAWP: 1
 
 # Points for bomb defusal
 PointsForBombDefusal: 2
 
-# Points for bomb planting
-PointsForBombPlanting: 2
+# Points for bomb explosion
+PointsForBombExploded: 2
 
-# Message for rank up.
+# Message for rank increase.
 RankUpMessage: Your rank has been increased to {RANK_NAME}!
 
-# Message for rank down.
+# Message for rank decrease.
 RankDownMessage: Your rank has been decreased to {RANK_NAME}.
 
-# Minimum number of players for experience calculation - players receive experience only if at least this number of players is on the server.
-GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to earn experience."
+# Points for bomb planting - the number of points added to a player for successfully planting a bomb.
+PointsForBombPlanting: 2
+
+# Points for bomb dropping - the number of points deducted from a player for dropping the bomb.
+PointsForBombDropping: -2
+
+# Points for bomb pickup - the number of points added to a player for picking up the bomb.
+PointsForBombPickup: 1
+
+# Points for wallbang kill.
+PointsForWallbang: 3
+
+# Minimum number of players required for experience points - players earn experience only if at least this number of players are playing on the server.
+GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players required to earn experience."
 MinPlayersForExperience: 4
 
-# Messages upon receiving experience
+# Messages upon gaining experience
 PointsChangeMessage: "[ {Yellow}RanksPoints{White} ] Your experience:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]"
 # Events
 SuicideMessage: "suicide"
@@ -91,11 +103,19 @@ MVPMessage: "MVP"
 MVPMessageColor: "{Gold}"
 BombDefusalMessage: "bomb defusal"
 BombDefusalMessageColor: "{Green}"
+BombExplodedMessage: "bomb explosion"
+BombExplodedMessageColor: "{Green}"
 BombPlantingMessage: "bomb planting"
 BombPlantingMessageColor: "{Green}"
+BombDroppingMessage: "bomb dropping"
+BombDroppingMessageColor: "{Red}"
+BombPickupMessage: "bomb pickup"
+BombPickupMessageColor: "{Green}"
+WallbangMessage: "wallbang kill"
+WallbangMessageColor: "{Purple}"
 
 # !rank
-RankCommandMessage : "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}"
+RankCommandMessage : "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Place: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}"
 TimeFormat: "{0}d {1}h {2}min"
 
 # !top
@@ -123,15 +143,15 @@ TopKDRCommandNoDataMessage: "[ {Red}Error{White} ] No data on top players by KDR
 TopKDRCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
 
 # !toptime
-TopTimeCommandIntroMessage: "[ {Gold}Top players by server time{White} ]"
+TopTimeCommandIntroMessage: "[ {Gold}Top players by time on server{White} ]"
 TopTimeCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}"
-TopTimeCommandNoDataMessage : "[ {Red}Error{White} ] No data on top players by server time."
+TopTimeCommandNoDataMessage : "[ {Red}Error{White} ] No data on top players by time on server."
 TopTimeCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
 TopTimeFormat: "{0}d {1}h {2}min"
 
 # !resetstats
-ResetStatsCooldownMessage: "[ {Red}RanksPoints {White}] You can reset your statistics only once every 3 hours."
-ResetStatsSuccessMessage: "[ {Yellow}RanksPoints {White}] Your statistics have been reset."
+ResetStatsCooldownMessage: "[ {Red}RanksPoints {White}] You can only reset your stats once every 3 hours."
+ResetStatsSuccessMessage: "[ {Yellow}RanksPoints {White}] Your stats have been reset."
 ResetStatsCooldownHours: "3"
 
 # !ranks
@@ -142,71 +162,102 @@ RanksCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executi
 
 # !lvl
 LvlCommandIntroMessage: "[ {Gold}List of available commands{White} ]"
-RankCommandDescription: "- {Green}!rank {White}- Displays your current rank and statistics"
-TopCommandDescription: "- {Green}!top {White}- Displays the top-10 players by points"
-TopKillsCommandDescription: "- {Green}!topkills {White}- Displays the top-10 players by kills"
-TopDeathsCommandDescription: "- {Green}!topdeaths {White}- Displays the top-10 players by deaths"
-TopKDRCommandDescription: "- {Green}!topkdr {White}- Displays the top-10 players by KDR"
-TopTimeCommandDescription: "- {Green}!toptime {White}- Displays the top-10 players by server time"
-ResetStatsCommandDescription: "- {Green}!resetstats {White}- Reset your statistics (can be used once every 3 hours)"
-RanksCommandDescription: "- {Green}!ranks {White}- Displays a list of all ranks and the experience required to obtain them"
+RankCommandDescription: "- {Green}!rank {White}- Shows your current rank and statistics"
+TopCommandDescription: "- {Green}!top {White}- Shows the top-10 players by points"
+TopKillsCommandDescription: "- {Green}!topkills {White}- Shows the top-10 players by kills"
+TopDeathsCommandDescription: "- {Green}!topdeaths {White}- Shows the top-10 players by deaths"
+TopKDRCommandDescription: "- {Green}!topkdr {White}- Shows the top-10 players by KDR"
+TopTimeCommandDescription: "- {Green}!toptime {White}- Shows the top-10 players by time on server"
+ResetStatsCommandDescription: "- {Green}!resetstats {White}- Reset your stats (can be used once every 3 hours)"
+RanksCommandDescription: "- {Green}!ranks {White}- Shows a list of all ranks and the experience needed to achieve them"
 ```
 # Rank Configuration (settings_ranks.yml)
 ```
-- id: 1
+- id: 0
   name: Silver - I
   minExperience: 0
-- id: 2
+  clanTag: '[Silver - I]'
+- id: 1
   name: Silver - II
   minExperience: 10
-- id: 3
+  clanTag: '[Silver - II]'
+- id: 2
   name: Silver - III
   minExperience: 25
-- id: 4
+  clanTag: '[Silver - III]'
+- id: 3
   name: Silver - IV
   minExperience: 50
-- id: 5
+  clanTag: '[Silver - IV]'
+- id: 4
   name: Silver Elite
   minExperience: 75
-- id: 6
-  name: Silver - Grand Master
+  clanTag: '[Silver Elite]'
+- id: 5
+  name: Silver - Master Guardian
   minExperience: 100
-- id: 7
+  clanTag: '[Silver - MG]'
+- id: 6
   name: Gold Star - I
   minExperience: 150
-- id: 8
+  clanTag: '[Gold Star - I]'
+- id: 7
   name: Gold Star - II
   minExperience: 200
-- id: 9
+  clanTag: '[Gold Star - II]'
+- id: 8
   name: Gold Star - III
   minExperience: 300
-- id: 10
+  clanTag: '[Gold Star - III]'
+- id: 9
   name: Gold Star - Master
   minExperience: 500
-- id: 11
+  clanTag: '[Gold Star - M]'
+- id: 10
   name: Master Guardian - I
   minExperience: 750
-- id: 12
+  clanTag: '[Master Guardian - I]'
+- id: 11
   name: Master Guardian - II
   minExperience: 1000
-- id: 13
-  name: Master Guardian - Elite
+  clanTag: '[Master Guardian - II]'
+- id: 12
+  name: Master Guardian Elite
   minExperience: 1500
-- id: 14
+  clanTag: '[Master Guardian Elite]'
+- id: 13
   name: Distinguished Master Guardian
   minExperience: 2000
-- id: 15
+  clanTag: '[Distinguished MG]'
+- id: 14
   name: Legendary Eagle
   minExperience: 3000
-- id: 16
+  clanTag: '[Legendary Eagle]'
+- id: 15
   name: Legendary Eagle Master
   minExperience: 5000
-- id: 17
-  name: Supreme Master - Highest Rank
+  clanTag: '[Legendary Eagle M]'
+- id: 16
+  name: Supreme Master First Class
   minExperience: 7500
-- id: 18
+  clanTag: '[Supreme M-FC]'
+- id: 17
   name: Global Elite
   minExperience: 10000
+  clanTag: '[Global Elite]'
+```
+
+# Configuration file for setting up experience points awarded for kills with specific types of weapons (Weapons.yml).
+Additional weapon types can also be added, for example, 'weapon_knife' corresponds to 'knife'.
+```
+- WeaponName: knife
+  Points: 10
+  MessageColor: '{LightYellow}'
+  KillMessage: knife kill
+- WeaponName: awp
+  Points: 5
+  MessageColor: '{Blue}'
+  KillMessage: precise AWP shot
 ```
 
 # Database Connection Configuration (dbconfig.json)
@@ -291,8 +342,8 @@ PointsForNoScopeAWP: 1
 # Очки за обезвреживание бомбы
 PointsForBombDefusal: 2
 
-# Очки за установку бомбы
-PointsForBombPlanting: 2
+# Очки за взрыв бомбы
+PointsForBombExploded: 2
 
 # Сообщение о повышении звания.
 RankUpMessage: Ваше звание было повышено до {RANK_NAME}!
@@ -300,9 +351,21 @@ RankUpMessage: Ваше звание было повышено до {RANK_NAME}!
 # Сообщение о понижении звания.
 RankDownMessage: Ваше звание было понижено до {RANK_NAME}.
 
+# Очки за установку бомбы - количество очков, добавляемое игроку за успешную установку бомбы.
+PointsForBombPlanting: 2
+
+# Очки за выброс бомбы - количество очков, вычитаемое у игрока за выброс бомбы.
+PointsForBombDropping: -2
+
+# Очки за поднятие бомбы - количество очков, добавляемое игроку за поднятие бомбы.
+PointsForBombPickup: 1
+
+# Очки за убийство через прострел.
+PointsForWallbang: 3
+
 # Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.
 GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игроков для начисления опыта."
-MinPlayersForExperience: 1
+MinPlayersForExperience: 4
 
 # Сообщения при получении опыта
 PointsChangeMessage: "[ {Yellow}RanksPoints{White} ] Ваш опыт:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} за {REASON}]"
@@ -327,8 +390,16 @@ MVPMessage: "MVP"
 MVPMessageColor: "{Gold}"
 BombDefusalMessage: "обезвреживание бомбы"
 BombDefusalMessageColor: "{Green}"
+BombExplodedMessage: "взрыв бомбы"
+BombExplodedMessageColor: "{Green}"
 BombPlantingMessage: "установку бомбы"
 BombPlantingMessageColor: "{Green}"
+BombDroppingMessage: "выброс бомбы"
+BombDroppingMessageColor: "{Red}"
+BombPickupMessage: "поднятие бомбы"
+BombPickupMessageColor: "{Green}"
+WallbangMessage: "прострел"
+WallbangMessageColor: "{Purple}"
 
 # !rank
 RankCommandMessage : "[ {Yellow}RanksPoints {White}] Звание: {Green}{RANK_NAME} {White}| Место: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Опыт: {Gold}{POINTS} {White}| Убийства: {Green}{KILLS} {White}| Смерти: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Время на сервере: {Gold}{PLAY_TIME}"
@@ -444,6 +515,19 @@ RanksCommandDescription: "- {Green}!ranks {White}- Показывает спис
 - id: 18
   name: Всемирная Элита
   minExperience: 10000
+```
+
+# Конфигурационный файл для настройки начисления опыта за убийства с использованием определенных видов оружия (Weapons.yml).
+Также можно добавить другие виды оружия, например, 'weapon_knife', это 'knife'
+```
+- WeaponName: knife
+  Points: 10
+  MessageColor: '{Red}'
+  KillMessage: убийство ножом
+- WeaponName: awp
+  Points: 5
+  MessageColor: '{Blue}'
+  KillMessage: точный выстрел из AWP
 ```
 
 # Конфиг подключения базы данных (dbconfig.json)
