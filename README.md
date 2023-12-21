@@ -26,63 +26,61 @@ The RanksPoints system is based on a simple principle: players perform various a
 
 # Main Configuration (Config.yml)
 ```
-# Configuration file for RankPointsPlugin
-# Points for kill - the number of points added to a player for killing an opponent.
+# Configuration file for RankPoints
+
+# Points awarded
+# Points for Kill - The amount of points added to a player for killing an opponent.
 PointsForKill: 5
-
-# Points deducted for death - the number of points deducted from a player for dying.
+# Points deducted for Death - The amount of points deducted from a player for dying.
 PointsForDeath: -5
-
-# Points for assist - the number of points added to a player for assisting in a kill.
+# Points for Assist - The amount of points added to a player for assisting in a kill.
 PointsForAssist: 1
-
-# Points for suicide - the number of points deducted from a player for committing suicide.
+# Points for Suicide - The amount of points deducted from a player for committing suicide.
 PointsForSuicide: -6
-
-# Points for headshot - additional points for a kill with a headshot.
+# Points for Headshot - Additional points for killing with a headshot.
 PointsForHeadshot: 1
-
-# Points for round win - the number of points added to a player for their team's victory in a round.
+# Points for Round Win - The amount of points added to a player for their team winning the round.
 PointsPerRoundWin: 2
-
-# Points for round loss - the number of points deducted from a player for their team's loss in a round.
+# Points for Round Loss - The amount of points deducted from a player for their team losing the round.
 PointsPerRoundLoss: -2
-
-# Points for MVP - the number of points added to a player for earning the MVP title of the round.
+# Points for MVP - The amount of points added to a player for earning the MVP title of the round.
 PointsPerMVP: 3
-
-# Points for kill with AWP without scope - additional points for a kill without using a scope.
+# Points for No-Scope AWP Kill - Additional points for a kill without using the scope.
 PointsForNoScopeAWP: 1
-
-# Points for bomb defusal
+# Points for Bomb Defusal
 PointsForBombDefusal: 2
-
-# Points for bomb explosion
+# Points for Bomb Explosion
 PointsForBombExploded: 2
-
-# Message for rank increase.
-RankUpMessage: Your rank has been increased to {RANK_NAME}!
-
-# Message for rank decrease.
-RankDownMessage: Your rank has been decreased to {RANK_NAME}.
-
-# Points for bomb planting - the number of points added to a player for successfully planting a bomb.
+# Points for Bomb Planting - The amount of points added to a player for successfully planting the bomb.
 PointsForBombPlanting: 2
-
-# Points for bomb dropping - the number of points deducted from a player for dropping the bomb.
+# Points for Bomb Dropping - The amount of points deducted from a player for dropping the bomb.
 PointsForBombDropping: -2
-
-# Points for bomb pickup - the number of points added to a player for picking up the bomb.
+# Points for Bomb Pickup - The amount of points added to a player for picking up the bomb.
 PointsForBombPickup: 1
-
-# Points for wallbang kill.
+# Points for Wallbang.
 PointsForWallbang: 3
+# Points for Hostage Follows
+PointsForHostageFollows: 2
+# Points for Losing Hostage
+PointsForHostageStopsFollowing: -2
+# Points for Rescuing Hostage
+PointsForHostageRescued: 4
 
-# Minimum number of players required for experience points - players earn experience only if at least this number of players are playing on the server.
-GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players required to earn experience."
+# RanksPoints settings
+# Display of clan tags for players' ranks. true - enabled, false - disabled.
+EnableClanTags: True
+# Minimum number of players required for earning experience - players earn experience only if this minimum number of players is present on the server.
+GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to earn experience."
 MinPlayersForExperience: 4
+# Enabling or disabling additional experience for special nicknames
+EnableSpecialNicknameBonus: true
+# Experience multiplier for special nicknames
+BonusMultiplierForSpecialNickname: 1.5
+# String to look for in the nickname to apply the multiplier
+SpecialNicknameContains: "example.com"
 
-# Messages upon gaining experience
+# All RanksPoints messages
+# Messages for gaining experience
 PointsChangeMessage: "[ {Yellow}RanksPoints{White} ] Your experience:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]"
 # Events
 SuicideMessage: "suicide"
@@ -91,7 +89,7 @@ DeathMessage: "death"
 DeathMessageColor: "{Red}"
 KillMessage: "kill"
 KillMessageColor: "{Green}"
-NoScopeAWPMessage: "kill with AWP without a scope"
+NoScopeAWPMessage: "no-scope AWP kill"
 NoScopeAWPMessageColor: "{Blue}"
 HeadshotMessage: "headshot"
 HeadshotMessageColor: "{Yellow}"
@@ -113,65 +111,101 @@ BombDroppingMessage: "bomb dropping"
 BombDroppingMessageColor: "{Red}"
 BombPickupMessage: "bomb pickup"
 BombPickupMessageColor: "{Green}"
-WallbangMessage: "wallbang kill"
+WallbangMessage: "wallbang"
 WallbangMessageColor: "{Purple}"
+HostageFollowsMessage: "hostage follows"
+HostageFollowsMessageColor: "{Green}"
+HostageStopsFollowingMessage: "hostage stops following"
+HostageStopsFollowingMessageColor: "{Red}"
+HostageRescuedMessage: "hostage rescued"
+HostageRescuedMessageColor: "{Blue}"
+
+# Message for rank promotion.
+RankUpMessage: Your rank has been promoted to {RANK_NAME}!
+# Message for rank demotion.
+RankDownMessage: Your rank has been demoted to {RANK_NAME}.
 
 # !rank
-RankCommandMessage : "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Place: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}"
+RankCommandMessage : "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on server: {Gold}{PLAY_TIME}"
 TimeFormat: "{0}d {1}h {2}min"
+# Enabling or disabling the !rank command
+IsRankCommandEnabled: true
 
 # !top
 TopCommandIntroMessage : "[ {Blue}Top players{White} ]"
 TopCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} points{White}"
 TopCommandNoDataMessage: "[ {Red}Error{White} ] No data on top players."
-TopCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+TopCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
+# Enabling or disabling the !top command
+IsTopCommandEnabled: true
 
 # !topkills
 TopKillsCommandIntroMessage: "[ {Green}Top players by kills{White} ]"
 TopKillsCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Green}{KILLS} kills{White}"
 TopKillsCommandNoDataMessage: "[ {Red}Error{White} ] No data on top players by kills."
-TopKillsCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+TopKillsCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
+# Enabling or disabling the !topkills command
+IsTopkillsCommandEnabled: true
 
 # !topdeaths
 TopDeathsCommandIntroMessage: "[ {Red}Top players by deaths{White} ]"
 TopDeathsCommandPlayerMessage: "{INDEX}. {Grey}{NAME}{White} - {Red}{DEATHS} deaths{White}"
 TopDeathsCommandNoDataMessage: "[ {Red}Error{White} ] No data on top players by deaths."
-TopDeathsCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+TopDeathsCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
+# Enabling or disabling the !topdeaths command
+IsTopdeathsCommandEnabled: true
 
 # !topkdr
 TopKDRCommandIntroMessage: "[ {Yellow}Top players by KDR{White} ]"
 TopKDRCommandPlayerMessage: "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}"
 TopKDRCommandNoDataMessage: "[ {Red}Error{White} ] No data on top players by KDR."
-TopKDRCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+TopKDRCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
+# Enabling or disabling the !topkdr command
+IsTopkdrCommandEnabled: true
 
 # !toptime
-TopTimeCommandIntroMessage: "[ {Gold}Top players by time on server{White} ]"
+TopTimeCommandIntroMessage: "[ {Gold}Top players by server time{White} ]"
 TopTimeCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}"
-TopTimeCommandNoDataMessage : "[ {Red}Error{White} ] No data on top players by time on server."
-TopTimeCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+TopTimeCommandNoDataMessage : "[ {Red}Error{White} ] No data on top players by server time."
+TopTimeCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
 TopTimeFormat: "{0}d {1}h {2}min"
+# Enabling or disabling the !toptime command
+IsToptimeCommandEnabled: true
 
 # !resetstats
-ResetStatsCooldownMessage: "[ {Red}RanksPoints {White}] You can only reset your stats once every 3 hours."
-ResetStatsSuccessMessage: "[ {Yellow}RanksPoints {White}] Your stats have been reset."
+ResetStatsCooldownMessage: "[ {Red}RanksPoints {White}] You can only reset your statistics once every 3 hours."
+ResetStatsSuccessMessage: "[ {Yellow}RanksPoints {White}] Your statistics have been reset."
 ResetStatsCooldownHours: "3"
+# Enabling or disabling the !resetstats command
+IsResetstatsCommandEnabled: true
 
 # !ranks
 RanksCommandIntroMessage: "[ {Gold}List of ranks{White} ]"
 RanksCommandRankMessage: "{NAME} - {Green}{EXPERIENCE} experience{White}"
 RanksCommandNoDataMessage: "[ {Red}Error{White} ] No data on ranks."
-RanksCommandErrorMessage: "[ {Red}Error{White} ] An error occurred while executing the command."
+RanksCommandErrorMessage: "[ {Red}Error{White} ] An error occurred executing the command."
+# Enabling or disabling the !ranks command
+IsRanksCommandEnabled: true
 
 # !lvl
 LvlCommandIntroMessage: "[ {Gold}List of available commands{White} ]"
-RankCommandDescription: "- {Green}!rank {White}- Shows your current rank and statistics"
+RankCommandDescription: "- {Green}!rank {White}- Displays your current rank and statistics"
 TopCommandDescription: "- {Green}!top {White}- Shows the top-10 players by points"
 TopKillsCommandDescription: "- {Green}!topkills {White}- Shows the top-10 players by kills"
 TopDeathsCommandDescription: "- {Green}!topdeaths {White}- Shows the top-10 players by deaths"
 TopKDRCommandDescription: "- {Green}!topkdr {White}- Shows the top-10 players by KDR"
-TopTimeCommandDescription: "- {Green}!toptime {White}- Shows the top-10 players by time on server"
-ResetStatsCommandDescription: "- {Green}!resetstats {White}- Reset your stats (can be used once every 3 hours)"
-RanksCommandDescription: "- {Green}!ranks {White}- Shows a list of all ranks and the experience needed to achieve them"
+TopTimeCommandDescription: "- {Green}!toptime {White}- Shows the top-10 players by server time"
+ResetStatsCommandDescription: "- {Green}!resetstats {White}- Reset your statistics (can be used once every 3 hours)"
+RanksCommandDescription: "- {Green}!ranks {White}- Shows a list of all ranks and the experience required to achieve them"
+TagRankCommandDescription: "- {Green}!tagrank {White}- Enables or disables the display of your clan tag"
+# Enabling or disabling the !lvl command
+IsLvlCommandEnabled: true
+
+# !tagrank
+TagRankEnabledMessage: "[ {Yellow}RanksPoints {White}] Your clan tag will be displayed again, starting from the next round."
+TagRankDisabledMessage: "[ {Yellow}RanksPoints {White}] Your clan tag will no longer be displayed, starting from the next round."
+# Enabling or disabling the !tagrank command
+IsTagRankCommandEnabled: true
 ```
 # Rank Configuration (settings_ranks.yml)
 ```
@@ -283,6 +317,7 @@ Additional weapon types can also be added, for example, 'weapon_knife' correspon
 - `!resetstats` resets your statistics (can be used once every 3 hours).
 - `!ranks` shows a list of all ranks and the experience required to achieve them.
 - `!lvl` shows a list of all available commands and their functions.
+- `!tagrank` enables or disables the clan tag
 
 # Console Commands
 - `rp_reloadconfig` reloads the configuration file Config.yml.
@@ -315,62 +350,60 @@ RanksPoints система базируется на простом принци
 
 # Основной конфиг (Config.yml)
 ```
-# Конфигурационный файл для RankPointsPlugin
+# Конфигурационный файл для RankPoints
+
+# Количество выдаваемых очков
 # Очки за убийство - количество очков, добавляемое игроку за убийство противника.
 PointsForKill: 5
-
 # Очки отнимаемые за смерть - количество очков, вычитаемое у игрока за смерть.
 PointsForDeath: -5
-
 # Очки за помощь - количество очков, добавляемое игроку за помощь в убийстве.
 PointsForAssist: 1
-
 # Очки за самоубийство - количество очков, вычитаемое у игрока за самоубийство.
 PointsForSuicide: -6
-
 # Очки за выстрел в голову - дополнительные очки за убийство с выстрелом в голову.
 PointsForHeadshot: 1
-
 # Очки за победу в раунде - количество очков, добавляемое игроку за победу его команды в раунде.
 PointsPerRoundWin: 2
-
 # Очки за проигрыш в раунде - количество очков, вычитаемое у игрока за проигрыш его команды в раунде.
 PointsPerRoundLoss: -2
-
 # Очки за MVP - количество очков, добавляемое игроку за получение звания MVP раунда.
 PointsPerMVP: 3
-
 # Очки за убийство с AWP без прицела - дополнительные очки за убийство без использования прицела.
 PointsForNoScopeAWP: 1
-
 # Очки за обезвреживание бомбы
 PointsForBombDefusal: 2
-
 # Очки за взрыв бомбы
 PointsForBombExploded: 2
-
-# Сообщение о повышении звания.
-RankUpMessage: Ваше звание было повышено до {RANK_NAME}!
-
-# Сообщение о понижении звания.
-RankDownMessage: Ваше звание было понижено до {RANK_NAME}.
-
 # Очки за установку бомбы - количество очков, добавляемое игроку за успешную установку бомбы.
 PointsForBombPlanting: 2
-
 # Очки за выброс бомбы - количество очков, вычитаемое у игрока за выброс бомбы.
 PointsForBombDropping: -2
-
 # Очки за поднятие бомбы - количество очков, добавляемое игроку за поднятие бомбы.
 PointsForBombPickup: 1
-
 # Очки за убийство через прострел.
 PointsForWallbang: 3
+# Очки за поднятие заложника
+PointsForHostageFollows: 2
+# Очки за потерю заложника
+PointsForHostageStopsFollowing: -2
+# Очки за спасение заложника
+PointsForHostageRescued: 4
 
+# Параметры RanksPoints
+# Отображение клан-тегов званий для игроков. true - включено, false - отключено.
+EnableClanTags: True
 # Минимальное количество игроков для начисления опыта - игрокам начисляется опыт только если на сервере играет минимум это количество игроков.
 GetActivePlayerCountMsg: "[ {Yellow}RanksPoints {White}] Необходимо минимум {Red}{MIN_PLAYERS} {White}игроков для начисления опыта."
 MinPlayersForExperience: 4
+# Включение или выключение дополнительного опыта для специальных никнеймов
+EnableSpecialNicknameBonus: true
+# Множитель опыта для специальных никнеймов
+BonusMultiplierForSpecialNickname: 1.5
+# Строка, которую нужно искать в никнейме для применения множителя
+SpecialNicknameContains: "example.com"
 
+# Все сообщения RanksPoints
 # Сообщения при получении опыта
 PointsChangeMessage: "[ {Yellow}RanksPoints{White} ] Ваш опыт:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} за {REASON}]"
 # События
@@ -404,34 +437,55 @@ BombPickupMessage: "поднятие бомбы"
 BombPickupMessageColor: "{Green}"
 WallbangMessage: "прострел"
 WallbangMessageColor: "{Purple}"
+HostageFollowsMessage: "заложник следует"
+HostageFollowsMessageColor: "{Green}"
+HostageStopsFollowingMessage: "заложник перестал следовать"
+HostageStopsFollowingMessageColor: "{Red}"
+HostageRescuedMessage: "заложник спасен"
+HostageRescuedMessageColor: "{Blue}"
+
+# Сообщение о повышении звания.
+RankUpMessage: Ваше звание было повышено до {RANK_NAME}!
+# Сообщение о понижении звания.
+RankDownMessage: Ваше звание было понижено до {RANK_NAME}.
 
 # !rank
 RankCommandMessage : "[ {Yellow}RanksPoints {White}] Звание: {Green}{RANK_NAME} {White}| Место: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Опыт: {Gold}{POINTS} {White}| Убийства: {Green}{KILLS} {White}| Смерти: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Время на сервере: {Gold}{PLAY_TIME}"
 TimeFormat: "{0}д {1}ч {2}мин"
+# Включение или выключение команды !rank
+IsRankCommandEnabled: true
 
 # !top
 TopCommandIntroMessage : "[ {Blue}Топ игроков{White} ]"
 TopCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} очков{White}"
 TopCommandNoDataMessage: "[ {Red}Ошибка{White} ] Нет данных о топ игроках."
 TopCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
+# Включение или выключение команды !top
+IsTopCommandEnabled: true
 
 # !topkills
 TopKillsCommandIntroMessage: "[ {Green}Топ игроков по убийствам{White} ]"
 TopKillsCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Green}{KILLS} убийств{White}"
 TopKillsCommandNoDataMessage: "[ {Red}Ошибка{White} ] Нет данных о топ игроках по убийствам."
 TopKillsCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
+# Включение или выключение команды !topkills
+IsTopkillsCommandEnabled: true
 
 # !topdeaths
 TopDeathsCommandIntroMessage: "[ {Red}Топ игроков по смертям{White} ]"
 TopDeathsCommandPlayerMessage: "{INDEX}. {Grey}{NAME}{White} - {Red}{DEATHS} смертей{White}"
 TopDeathsCommandNoDataMessage: "[ {Red}Ошибка{White} ] Нет данных о топ игроках по смертям."
 TopDeathsCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
+# Включение или выключение команды !topdeaths
+IsTopdeathsCommandEnabled: true
 
 # !topkdr
 TopKDRCommandIntroMessage: "[ {Yellow}Топ игроков по KDR{White} ]"
 TopKDRCommandPlayerMessage: "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}"
 TopKDRCommandNoDataMessage: "[ {Red}Ошибка{White} ] Нет данных о топ игроках по KDR."
 TopKDRCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
+# Включение или выключение команды !topkdr
+IsTopkdrCommandEnabled: true
 
 # !toptime
 TopTimeCommandIntroMessage: "[ {Gold}Топ игроков по времени на сервере{White} ]"
@@ -439,17 +493,23 @@ TopTimeCommandPlayerMessage: "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}"
 TopTimeCommandNoDataMessage : "[ {Red}Ошибка{White} ] Нет данных о топ игроках по времени на сервере."
 TopTimeCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
 TopTimeFormat: "{0}д {1}ч {2}мин"
+# Включение или выключение команды !toptime
+IsToptimeCommandEnabled: true
 
 # !resetstats
 ResetStatsCooldownMessage: "[ {Red}RanksPoints {White}] Сбросить статистику можно только раз в 3 часа."
 ResetStatsSuccessMessage: "[ {Yellow}RanksPoints {White}] Ваша статистика сброшена."
 ResetStatsCooldownHours: "3"
+# Включение или выключение команды !resetstats
+IsResetstatsCommandEnabled: true
 
 # !ranks
 RanksCommandIntroMessage: "[ {Gold}Список званий{White} ]"
 RanksCommandRankMessage: "{NAME} - {Green}{EXPERIENCE} опыта{White}"
 RanksCommandNoDataMessage: "[ {Red}Ошибка{White} ] Нет данных о званиях."
 RanksCommandErrorMessage: "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."
+# Включение или выключение команды !ranks
+IsRanksCommandEnabled: true
 
 # !lvl
 LvlCommandIntroMessage: "[ {Gold}Список доступных команд{White} ]"
@@ -461,6 +521,15 @@ TopKDRCommandDescription: "- {Green}!topkdr {White}- Показывает топ
 TopTimeCommandDescription: "- {Green}!toptime {White}- Показывает топ-10 игроков по времени на сервере"
 ResetStatsCommandDescription: "- {Green}!resetstats {White}- Сбросить свою статистику (можно использовать раз в 3 часа)"
 RanksCommandDescription: "- {Green}!ranks {White}- Показывает список всех званий и опыта, необходимого для их получения"
+TagRankCommandDescription: "- {Green}!tagrank {White}- Включает или выключает отображение вашего клан-тега"
+# Включение или выключение команды !lvl
+IsLvlCommandEnabled: true
+
+# !tagrank
+TagRankEnabledMessage: "[ {Yellow}RanksPoints {White}] Клан-тег будет вновь отображаться, начиная с следующего раунда."
+TagRankDisabledMessage: "[ {Yellow}RanksPoints {White}] Клан-тег больше не будет отображаться, начиная с следующего раунда."
+# Включение или выключение команды !tagrank
+IsTagRankCommandEnabled: true
 ```
 
 # Конфиг настройки званий (settings_ranks.yml)
@@ -555,6 +624,7 @@ RanksCommandDescription: "- {Green}!ranks {White}- Показывает спис
 - `!resetstats` Cбросить свою статистику (можно использовать раз в 3 часа)
 - `!ranks` показывает список всех званий и опыта, необходимого для их получения
 - `!lvl` показывает список всех доступных команд и их функций
+- `!tagrank` включает или выключает отображение клан-тега
 
 # Команды для консоли
 - `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
