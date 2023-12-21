@@ -1116,27 +1116,16 @@ namespace RanksPointsNamespace
                     await connection.OpenAsync();
                     using (var transaction = await connection.BeginTransactionAsync())
                     {
-                        try
-                        {
-                            var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID;";
-                            var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID FOR UPDATE;";
+                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
 
-                            updatedPoints = currentPoints + points;
-                            if (updatedPoints < 0)
-                            {
-                                updatedPoints = 0;
-                            }
+                        updatedPoints = currentPoints + points;
+                        if (updatedPoints < 0) updatedPoints = 0;
 
-                            var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
-                            await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
 
-                            await transaction.CommitAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            await transaction.RollbackAsync();
-                            Console.WriteLine("Exception in AddOrRemovePoints: " + ex.Message);
-                        }
+                        await transaction.CommitAsync();
                     }
                 }
 

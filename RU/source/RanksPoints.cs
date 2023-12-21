@@ -336,8 +336,6 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine("# Включение или выключение команды !tagrank");
             stringBuilder.AppendLine($"IsTagRankCommandEnabled: {config.IsTagRankCommandEnabled.ToString().ToLower()}");
 
-
-
             File.WriteAllText(filePath, stringBuilder.ToString());
         }
 
@@ -461,6 +459,7 @@ namespace RanksPointsNamespace
             dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));
             RegisterListener<Listeners.OnClientConnected>(OnClientConnected);
             RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
+            RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
             RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
             RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
             RegisterEventHandler<EventWeaponFire>(OnWeaponFire);
@@ -486,7 +485,19 @@ namespace RanksPointsNamespace
 
             CreateDbConfigIfNotExists();
             dbConfig = DatabaseConfig.ReadFromJsonFile(Path.Combine(ModuleDirectory, DbConfigFileName));            
-        } 
+        }      
+        private void ClearAllPendingActions()
+        {
+            lock (_pendingActions)
+            {
+                _pendingActions.Clear();
+            }
+        }
+        private void OnMapEnd()
+        {
+            ClearAllPendingActions();
+        }
+
         private HookResult OnHostageFollows(EventHostageFollows hostageFollowsEvent, GameEventInfo info)
         {
             if (GetActivePlayerCount() < config.MinPlayersForExperience)
@@ -1119,27 +1130,16 @@ namespace RanksPointsNamespace
                     await connection.OpenAsync();
                     using (var transaction = await connection.BeginTransactionAsync())
                     {
-                        try
-                        {
-                            var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID;";
-                            var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID FOR UPDATE;";
+                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
 
-                            updatedPoints = currentPoints + points;
-                            if (updatedPoints < 0)
-                            {
-                                updatedPoints = 0;
-                            }
+                        updatedPoints = currentPoints + points;
+                        if (updatedPoints < 0) updatedPoints = 0;
 
-                            var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
-                            await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
 
-                            await transaction.CommitAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            await transaction.RollbackAsync();
-                            Console.WriteLine("Exception in AddOrRemovePoints: " + ex.Message);
-                        }
+                        await transaction.CommitAsync();
                     }
                 }
 
@@ -2048,10 +2048,10 @@ namespace RanksPointsNamespace
     }
     public class WeaponPoints
     {
-        public string WeaponName { get; set; }
+        public string? WeaponName { get; set; }
         public int Points { get; set; }
-        public string MessageColor { get; set; }
-        public string KillMessage { get; set; }
+        public string? MessageColor { get; set; }
+        public string? KillMessage { get; set; }
     }
     public class DatabaseConfig
     {
