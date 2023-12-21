@@ -317,7 +317,7 @@ Additional weapon types can also be added, for example, 'weapon_knife' correspon
 - `!resetstats` resets your statistics (can be used once every 3 hours).
 - `!ranks` shows a list of all ranks and the experience required to achieve them.
 - `!lvl` shows a list of all available commands and their functions.
-- `!tagrank` - enables or disables the clan tag
+- `!tagrank` enables or disables the clan tag
 
 # Console Commands
 - `rp_reloadconfig` reloads the configuration file Config.yml.
@@ -624,7 +624,7 @@ IsTagRankCommandEnabled: true
 - `!resetstats` Cбросить свою статистику (можно использовать раз в 3 часа)
 - `!ranks` показывает список всех званий и опыта, необходимого для их получения
 - `!lvl` показывает список всех доступных команд и их функций
-- `!tagrank` - включает или выключает отображение клан-тега
+- `!tagrank` включает или выключает отображение клан-тега
 
 # Команды для консоли
 - `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
