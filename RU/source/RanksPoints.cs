@@ -24,7 +24,7 @@ namespace RanksPointsNamespace
     {
         private const string PluginAuthor = "ABKAM";
         private const string PluginName = "[RanksPoints]";
-        private const string PluginVersion = "2.0.5";
+        private const string PluginVersion = "2.0.6";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -52,7 +52,14 @@ namespace RanksPointsNamespace
             public int PointsForWallbang { get; set; } = 3;
             public int PointsForHostageFollows { get; set; } = 2; 
             public int PointsForHostageStopsFollowing { get; set; } = -2; 
-            public int PointsForHostageRescued { get; set; } = 4;
+            public int PointsForHostageRescued { get; set; } = 4;       
+            public int PointsForKillThroughSmoke { get; set; } = 3;  
+            public string KillThroughSmokeMessage { get; set; } = "убийство через дым"; 
+            public string KillThroughSmokeMessageColor { get; set; } = "{Green}";    
+            public int PointsForBlindKill { get; set; } = 5; 
+            public string BlindKillMessage { get; set; } = "убийство в состоянии ослепления"; 
+            public string BlindKillMessageColor { get; set; } = "{Yellow}";       
+            public bool GivePointsForBotKills { get; set; } = false;        
             public bool EnableClanTags { get; set; } = true;
             public bool IsRankCommandEnabled { get; set; } = true;
             public bool IsTopCommandEnabled { get; set; } = true;
@@ -108,7 +115,7 @@ namespace RanksPointsNamespace
             public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Звание: {Green}{RANK_NAME} {White}| Место: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Опыт: {Gold}{POINTS} {White}| Убийства: {Green}{KILLS} {White}| Смерти: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Время на сервере: {Gold}{PLAY_TIME}";                                                            
             public string TimeFormat { get; set; } = "{0}д {1}ч {2}мин";   
             public string TopCommandIntroMessage { get; set; } = "[ {Blue}Топ игроков{White} ]"; 
-            public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Blue}{POINTS} очков{White}"; 
+            public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {White}{RANK} {Grey}- {Blue}{POINTS} очков";
             public string TopCommandNoDataMessage { get; set; } = "[ {Red}Ошибка{White} ] Нет данных о топ игроках."; 
             public string TopCommandErrorMessage { get; set; } = "[ {Red}Ошибка{White} ] Произошла ошибка при выполнении команды."; 
             public string TopKillsCommandIntroMessage { get; set; } = "[ {Green}Топ игроков по убийствам{White} ]";
@@ -183,6 +190,8 @@ namespace RanksPointsNamespace
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageFollows), config.PointsForHostageFollows, "Очки за поднятие заложника");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageStopsFollowing), config.PointsForHostageStopsFollowing, "Очки за потерю заложника");
             AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageRescued), config.PointsForHostageRescued, "Очки за спасение заложника");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKillThroughSmoke), config.PointsForKillThroughSmoke, "Очки за убийство через дым - количество очков, добавляемое игроку за убийство врага через дымовую завесу.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBlindKill), config.PointsForBlindKill, "Очки за убийство в состоянии ослепления - количество очков, добавляемое игроку за убийство, когда он ослеплен.");
 
 
             stringBuilder.AppendLine();
@@ -198,6 +207,9 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"BonusMultiplierForSpecialNickname: {config.BonusMultiplierForSpecialNickname}");
             stringBuilder.AppendLine("# Строка, которую нужно искать в никнейме для применения множителя");
             stringBuilder.AppendLine($"SpecialNicknameContains: \"{EscapeMessage(config.SpecialNicknameContains)}\"");
+            stringBuilder.AppendLine("# Включение или выключение начисления очков за убийство ботов. true - включено, false - выключено.");
+            AppendConfigValue(stringBuilder, nameof(config.GivePointsForBotKills), config.GivePointsForBotKills);
+
 
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# Все сообщения RanksPoints");
@@ -240,6 +252,12 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"HostageStopsFollowingMessageColor: \"{EscapeMessage(config.HostageStopsFollowingMessageColor)}\"");
             stringBuilder.AppendLine($"HostageRescuedMessage: \"{EscapeMessage(config.HostageRescuedMessage)}\"");
             stringBuilder.AppendLine($"HostageRescuedMessageColor: \"{EscapeMessage(config.HostageRescuedMessageColor)}\"");
+            stringBuilder.AppendLine($"KillThroughSmokeMessage: \"{EscapeMessage(config.KillThroughSmokeMessage)}\"");
+            stringBuilder.AppendLine($"KillThroughSmokeMessageColor: \"{EscapeMessage(config.KillThroughSmokeMessageColor)}\"");
+            stringBuilder.AppendLine($"BlindKillMessage: \"{EscapeMessage(config.BlindKillMessage)}\"");
+            stringBuilder.AppendLine($"BlindKillMessageColor: \"{EscapeMessage(config.BlindKillMessageColor)}\"");
+
+           
             stringBuilder.AppendLine();
             AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Сообщение о повышении звания.");
             AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Сообщение о понижении звания.");
@@ -972,7 +990,7 @@ namespace RanksPointsNamespace
         }
         private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
         {
-            if (deathEvent?.Userid?.IsBot ?? true)
+            if ((deathEvent?.Userid?.IsBot ?? true) && !config.GivePointsForBotKills)
             {
                 return HookResult.Continue;
             }
@@ -1041,13 +1059,38 @@ namespace RanksPointsNamespace
                         {
                             string wallbangMessageColor = ReplaceColorPlaceholders(config.WallbangMessageColor);
                             var wallbangPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForWallbang, deathEvent.Attacker, config.WallbangMessage, wallbangMessageColor);
+                            HandleAsyncOperation(wallbangPointsTask);
                         }   
 
-                        var weaponConfig = weaponPointsConfig.FirstOrDefault(wp => wp.WeaponName == deathEvent.Weapon);
+                        if (deathEvent.Thrusmoke && config.PointsForKillThroughSmoke != 0)
+                        {
+                            string messageColor = ReplaceColorPlaceholders(config.KillThroughSmokeMessageColor);
+                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForKillThroughSmoke, deathEvent.Attacker, config.KillThroughSmokeMessage, messageColor);
+                            HandleAsyncOperation(pointsTask);
+                        }
+
+                        if (deathEvent.Attackerblind && config.PointsForBlindKill != 0)
+                        {
+                            string messageColor = ReplaceColorPlaceholders(config.BlindKillMessageColor);
+                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForBlindKill, deathEvent.Attacker, config.BlindKillMessage, messageColor);
+                            HandleAsyncOperation(pointsTask);
+                        }                        
+
+                        var killerWeapon = deathEvent.Weapon.ToLowerInvariant();
+                        WeaponPoints weaponConfig;
+
+                        if (killerWeapon.Contains("knife"))
+                        {
+                            weaponConfig = weaponPointsConfig.FirstOrDefault(wp => wp.WeaponName.ToLowerInvariant() == "knife");
+                        }
+                        else
+                        {
+                            weaponConfig = weaponPointsConfig.FirstOrDefault(wp => wp.WeaponName.ToLowerInvariant() == killerWeapon);
+                        }
+
                         if (weaponConfig != null)
                         {
                             string messageColor = ReplaceColorPlaceholders(weaponConfig.MessageColor);
-
                             var pointsTask = AddOrRemovePointsAsync(killerSteamId, weaponConfig.Points, deathEvent.Attacker, weaponConfig.KillMessage, messageColor);
                         }                                         
                     }
@@ -1239,7 +1282,6 @@ namespace RanksPointsNamespace
             }
             return false;
         }
-
         private List<WeaponPoints> LoadWeaponPointsConfig()
         {
             var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
@@ -1261,8 +1303,17 @@ namespace RanksPointsNamespace
 
             var deserializer = new DeserializerBuilder().Build();
             var yamlContents = File.ReadAllText(filePath);
-            return deserializer.Deserialize<List<WeaponPoints>>(yamlContents) ?? new List<WeaponPoints>();
+            var weaponPoints = deserializer.Deserialize<List<WeaponPoints>>(yamlContents) ?? new List<WeaponPoints>();
+
+            Console.WriteLine("Загружена конфигурация оружия:");
+            foreach (var weaponPoint in weaponPoints)
+            {
+                Console.WriteLine($"Оружие: {weaponPoint.WeaponName}, Очки: {weaponPoint.Points}, Цвет сообщения: {weaponPoint.MessageColor}, Сообщение об убийстве: {weaponPoint.KillMessage}");
+            }
+
+            return weaponPoints;
         }
+
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
             string steamId64 = ConvertSteamIDToSteamID64(steamId);
@@ -1495,7 +1546,7 @@ namespace RanksPointsNamespace
                 {
                     connection.Open();
                     var topPlayersQuery = $@"
-                        SELECT steam, name, value
+                        SELECT steam, name, value, rank
                         FROM {dbConfig.Name}
                         ORDER BY value DESC
                         LIMIT 10;";
@@ -1504,16 +1555,20 @@ namespace RanksPointsNamespace
 
                     if (topPlayers.Any())
                     {
+                        var ranksConfig = LoadRanksConfig(); 
+
                         string introMessage = ReplaceColorPlaceholders(config.TopCommandIntroMessage);
                         player.PrintToChat(introMessage);
 
                         for (int i = 0; i < topPlayers.Count; i++)
                         {
                             var topPlayerInfo = topPlayers[i];
+                            var rankName = ranksConfig.FirstOrDefault(r => r.Id == topPlayerInfo.rank)?.Name ?? "Unknown Rank";
                             string playerMessage = config.TopCommandPlayerMessage
                                 .Replace("{INDEX}", (i + 1).ToString())
                                 .Replace("{NAME}", topPlayerInfo.name)
-                                .Replace("{POINTS}", topPlayerInfo.value.ToString());
+                                .Replace("{POINTS}", topPlayerInfo.value.ToString())
+                                .Replace("{RANK}", rankName);
                             playerMessage = ReplaceColorPlaceholders(playerMessage);
                             player.PrintToChat(playerMessage);
                         }
@@ -1532,6 +1587,8 @@ namespace RanksPointsNamespace
                 player.PrintToChat(errorMessage);
             }
         }
+
+
         [ConsoleCommand("topkills", "Показывает топ-10 игроков по убийствам")]
         public void OnTopKillsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1810,6 +1867,26 @@ namespace RanksPointsNamespace
             else
             {
                 player.PrintToChat("Эта команда доступна только из консоли сервера.");
+            }
+        }
+        [ConsoleCommand("rp_reloadweapons", "Перезагружает конфигурационный файл Weapons.yml")]
+        public void ReloadWeaponsConfigCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null || player.IsBot) 
+            {
+                try
+                {
+                    weaponPointsConfig = LoadWeaponPointsConfig();
+                    Console.WriteLine("[RankPointsPlugin] Конфигурация оружия успешно перезагружена.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[RankPointsPlugin] Ошибка при перезагрузке конфигурации оружия: {ex.Message}");
+                }
+            }
+            else
+            {
+                player.PrintToChat($"{ChatColors.Red}Эта команда доступна только из консоли сервера.");
             }
         }
 
