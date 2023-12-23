@@ -6,7 +6,7 @@
 I'm sorry for my poor English.
 
 # EN
-**To facilitate easier assistance, I have created a dedicated Discord server. You can join it using the following link: https://discord.gg/yQm8edwV**
+**To facilitate easier assistance, I have created a dedicated Discord server. You can join it using the following link: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
 
 The plugin was developed inspired by the [Levels Ranks] plugins and borrows most of its functions as well as the database. This means that the RanksPoints plugin can be integrated with LrWeb or GameCMS similar to [Levels Ranks]. During development, there was no opportunity to fully test the plugin, so there may be errors in its operation. If you find any issues, please report them for correction.
 
@@ -340,7 +340,7 @@ Additional weapon types can also be added, for example, 'weapon_knife' correspon
 - This list will be further expanded.
 
 # RU
-**Для удобства и лучшей организации помощи я создал специальный сервер в Discord. Вы можете присоединиться к нему по следующей ссылке: https://discord.gg/yQm8edwV**
+**Для удобства и лучшей организации помощи я создал специальный сервер в Discord. Вы можете присоединиться к нему по следующей ссылке: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
 
 Плагин был разработан, вдохновляясь плагином [Levels Ranks], и заимствует большую часть своих функций, а также базу данных. Это означает, что плагин RanksPoints может быть интегрирован с LrWeb или GameCMS аналогично [Levels Ranks]. В процессе разработки не было возможности полностью проверить плагин, поэтому в его работе могут проявляться ошибки. Если вы обнаружите какие-либо проблемы, сообщите об этом для их исправления.
 
