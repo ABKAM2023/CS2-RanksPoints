@@ -332,6 +332,7 @@ Additional weapon types can also be added, for example, 'weapon_knife' correspon
 # Console Commands
 - `rp_reloadconfig` reloads the configuration file Config.yml.
 - `rp_reloadranks` reloads the configuration file settings_ranks.yaml.
+- `rp_reloadweapons` reloads the configuration file Weapons.yaml.
 - `rp_resetranks` Clears a player's statistics. Usage: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` clears values, rank; `stats` clears kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` clears playtime).
 
 # Planned Features
@@ -649,6 +650,7 @@ IsTagRankCommandEnabled: true
 # Команды для консоли
 - `rp_reloadconfig` перезагружает конфигурационный файл Config.yml
 - `rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
+- `rp_reloadweapons` перезагружает конфигурационный файл Weapons.yaml 
 - `rp_resetranks` очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
 
 # Планируется
