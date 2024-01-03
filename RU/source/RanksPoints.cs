@@ -24,7 +24,7 @@ namespace RanksPointsNamespace
     {
         private const string PluginAuthor = "ABKAM";
         private const string PluginName = "[RanksPoints]";
-        private const string PluginVersion = "2.0.6";
+        private const string PluginVersion = "2.0.7";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -535,8 +535,7 @@ namespace RanksPointsNamespace
 
             if (config.PointsForHostageFollows != 0)
             {
-                var pointsTask = AddOrRemovePointsAsync(playerSteamId, config.PointsForHostageFollows, hostageFollowsEvent.Userid, config.HostageFollowsMessage, config.HostageFollowsMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(playerSteamId, config.PointsForHostageFollows, hostageFollowsEvent.Userid, config.HostageFollowsMessage, config.HostageFollowsMessageColor);
             }
 
             return HookResult.Continue;
@@ -560,8 +559,7 @@ namespace RanksPointsNamespace
 
             if (config.PointsForHostageStopsFollowing != 0)
             {
-                var pointsTask = AddOrRemovePointsAsync(playerSteamId, config.PointsForHostageStopsFollowing, hostageStopsFollowingEvent.Userid, config.HostageStopsFollowingMessage, config.HostageStopsFollowingMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(playerSteamId, config.PointsForHostageStopsFollowing, hostageStopsFollowingEvent.Userid, config.HostageStopsFollowingMessage, config.HostageStopsFollowingMessageColor);
             }
 
             return HookResult.Continue;
@@ -585,8 +583,7 @@ namespace RanksPointsNamespace
 
             if (config.PointsForHostageRescued != 0)
             {
-                var pointsTask = AddOrRemovePointsAsync(playerSteamId, config.PointsForHostageRescued, hostageRescuedEvent.Userid, config.HostageRescuedMessage, config.HostageRescuedMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(playerSteamId, config.PointsForHostageRescued, hostageRescuedEvent.Userid, config.HostageRescuedMessage, config.HostageRescuedMessageColor);
             }
 
             return HookResult.Continue;
@@ -634,8 +631,7 @@ namespace RanksPointsNamespace
             if (config.PointsForBombPickup != 0)
             {
                 string BombPickupMessageColor = ReplaceColorPlaceholders(config.BombPickupMessageColor);       
-                var pointsTask = AddOrRemovePointsAsync(pickerSteamId, config.PointsForBombPickup, bombPickupEvent.Userid, config.BombPickupMessage, BombPickupMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(pickerSteamId, config.PointsForBombPickup, bombPickupEvent.Userid, config.BombPickupMessage, BombPickupMessageColor);
             }    
 
             return HookResult.Continue;
@@ -654,8 +650,7 @@ namespace RanksPointsNamespace
             if (config.PointsForBombDropping != 0)
             {
                 string BombDroppingMessageColor = ReplaceColorPlaceholders(config.BombDroppingMessageColor);       
-                var pointsTask = AddOrRemovePointsAsync(dropperSteamId, config.PointsForBombDropping, bombDroppedEvent.Userid, config.BombDroppingMessage, BombDroppingMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(dropperSteamId, config.PointsForBombDropping, bombDroppedEvent.Userid, config.BombDroppingMessage, BombDroppingMessageColor);
             }    
 
             return HookResult.Continue;
@@ -673,8 +668,7 @@ namespace RanksPointsNamespace
             if (config.PointsForBombPlanting != 0)
             {
                 string BombPlantingMessageColor = ReplaceColorPlaceholders(config.BombPlantingMessageColor);       
-                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombPlanting, bombPlantedEvent.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(planterSteamId, config.PointsForBombPlanting, bombPlantedEvent.Userid, config.BombPlantingMessage, BombPlantingMessageColor);
             }    
 
             return HookResult.Continue;
@@ -682,12 +676,18 @@ namespace RanksPointsNamespace
 
         private async Task UpdatePlayerConnectionAsync(string steamId, string playerName, long currentTime)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                await connection.OpenAsync();
-
-                var insertQuery = $"INSERT INTO {dbConfig.Name} (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
-                await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var insertQuery = $"INSERT INTO {dbConfig.Name} (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
+                    await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePlayerConnectionAsync: {ex.Message}");
             }
         }
 
@@ -702,7 +702,6 @@ namespace RanksPointsNamespace
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 var updateTask = UpdatePlayerConnectionAsync(steamId, playerName, currentTime);
-                HandleAsyncOperation(updateTask);
 
                 activePlayers.Add(steamId);  
                 SetPlayerClanTag(player);
@@ -754,8 +753,7 @@ namespace RanksPointsNamespace
             {
                 string BombExplodedMessageColor = ReplaceColorPlaceholders(config.BombExplodedMessageColor);       
 
-                var pointsTask = AddOrRemovePointsAsync(planterSteamId, config.PointsForBombExploded, eventBombPlanted.Userid, config.BombExplodedMessage, BombExplodedMessageColor);
-                HandleAsyncOperation(pointsTask);           
+                var pointsTask = AddOrRemovePoints(planterSteamId, config.PointsForBombExploded, eventBombPlanted.Userid, config.BombExplodedMessage, BombExplodedMessageColor);         
             }    
 
             return HookResult.Continue;
@@ -774,8 +772,7 @@ namespace RanksPointsNamespace
             {
                 string BombDefusalMessageColor = ReplaceColorPlaceholders(config.BombDefusalMessageColor);  
 
-                var pointsTask = AddOrRemovePointsAsync(defuserSteamId, config.PointsForBombDefusal, eventBombDefused.Userid, config.BombDefusalMessage, BombDefusalMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(defuserSteamId, config.PointsForBombDefusal, eventBombDefused.Userid, config.BombDefusalMessage, BombDefusalMessageColor);
             }
 
             return HookResult.Continue;
@@ -815,22 +812,36 @@ namespace RanksPointsNamespace
         }
         private async Task UpdateShootsAsync(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var updateQuery = $"UPDATE {dbConfig.Name} SET shoots = shoots + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+            try
+            {            
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET shoots = shoots + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateShootsAsync: {ex.Message}");
+            }                
         }
 
         private async Task UpdateHitsAsync(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var updateQuery = $"UPDATE {dbConfig.Name} SET hits = hits + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+            try
+            {            
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET hits = hits + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateHitsAsync: {ex.Message}");
+            }                
         }
 
         private HookResult OnWeaponFire(EventWeaponFire fireEvent, GameEventInfo info)
@@ -839,7 +850,6 @@ namespace RanksPointsNamespace
             var shooterSteamId = ConvertSteamID64ToSteamID(shooterSteamId64);
 
             var updateTask = UpdateShootsAsync(shooterSteamId);
-            HandleAsyncOperation(updateTask);
 
             return HookResult.Continue;
         }
@@ -852,39 +862,34 @@ namespace RanksPointsNamespace
                 var attackerSteamId = ConvertSteamID64ToSteamID(attackerSteamId64);
 
                 var updateTask = UpdateHitsAsync(attackerSteamId);
-                HandleAsyncOperation(updateTask);
             }
 
             return HookResult.Continue;
-        }
-
-        private void HandleAsyncOperation(Task task)
-        {
-            task.ContinueWith(t =>
-            {
-                if (t.Exception != null)
-                {
-                    Console.WriteLine($"Error in async operation: {t.Exception}");
-                }
-            }, TaskContinuationOptions.OnlyOnFaulted);
-        }        
+        }      
         private async Task UpdatePlayerDisconnectAsync(string steamId, long currentTime)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-
-                var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM {dbConfig.Name} WHERE steam = @SteamID", new { SteamID = steamId });
-
-                if (playerData != null)
+            try
+            {            
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
-                    var sessionTime = currentTime - playerData.lastconnect;
-                    var newPlaytime = playerData.playtime + sessionTime;
+                    await connection.OpenAsync();
 
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET playtime = @Playtime WHERE steam = @SteamID;";
-                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
+                    var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM {dbConfig.Name} WHERE steam = @SteamID", new { SteamID = steamId });
+
+                    if (playerData != null)
+                    {
+                        var sessionTime = currentTime - playerData.lastconnect;
+                        var newPlaytime = playerData.playtime + sessionTime;
+
+                        var updateQuery = $"UPDATE {dbConfig.Name} SET playtime = @Playtime WHERE steam = @SteamID;";
+                        await connection.ExecuteAsync(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePlayerDisconnectAsync: {ex.Message}");
+            }                
         }
         private HookResult OnPlayerDisconnect(EventPlayerDisconnect disconnectEvent, GameEventInfo info)
         {
@@ -895,7 +900,6 @@ namespace RanksPointsNamespace
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 var disconnectTask = UpdatePlayerDisconnectAsync(steamId, currentTime);
-                HandleAsyncOperation(disconnectTask);
 
                 activePlayers.Remove(steamId);
 
@@ -937,12 +941,10 @@ namespace RanksPointsNamespace
                     if (pointsChange != 0)
                     {                          
                         string messageColor = isWin ? ReplaceColorPlaceholders(config.RoundWinMessageColor) : ReplaceColorPlaceholders(config.RoundLossMessageColor);   
-                        var pointsTask = AddOrRemovePointsAsync(steamId, pointsChange, playerController, isWin ? config.RoundWinMessage : config.RoundLossMessage, messageColor);
-                        HandleAsyncOperation(pointsTask);
+                        var pointsTask = AddOrRemovePoints(steamId, pointsChange, playerController, isWin ? config.RoundWinMessage : config.RoundLossMessage, messageColor);
                     }
 
                     var roundResultTask = UpdateRoundResultAsync(steamId, isWin);
-                    HandleAsyncOperation(roundResultTask);
                 }
             }
 
@@ -971,22 +973,28 @@ namespace RanksPointsNamespace
             {
                 string MVPMessageColor = ReplaceColorPlaceholders(config.MVPMessageColor);  
 
-                var pointsTask = AddOrRemovePointsAsync(mvpPlayerSteamId, config.PointsPerMVP, mvpEvent.Userid, config.MVPMessage, MVPMessageColor);
-                HandleAsyncOperation(pointsTask);
+                var pointsTask = AddOrRemovePoints(mvpPlayerSteamId, config.PointsPerMVP, mvpEvent.Userid, config.MVPMessage, MVPMessageColor);
             }
 
             return HookResult.Continue;
         }
         private async Task UpdateRoundResultAsync(string steamId, bool isWin)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                await connection.OpenAsync();
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
 
-                string columnToUpdate = isWin ? "round_win" : "round_lose";
-                var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                    string columnToUpdate = isWin ? "round_win" : "round_lose";
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePlayerConnectionAsync: {ex.Message}");
+            }                
         }
         private HookResult OnPlayerDeath(EventPlayerDeath deathEvent, GameEventInfo info)
         {
@@ -1015,7 +1023,7 @@ namespace RanksPointsNamespace
                     if (config.PointsForSuicide != 0)
                     {
                         string suicideMessageColor = ReplaceColorPlaceholders(config.SuicideMessageColor);
-                        var pointsTask = AddOrRemovePointsAsync(victimSteamId, config.PointsForSuicide, deathEvent.Userid, config.SuicideMessage, suicideMessageColor);
+                        var pointsTask = AddOrRemovePoints(victimSteamId, config.PointsForSuicide, deathEvent.Userid, config.SuicideMessage, suicideMessageColor);
                     }
                 }
                 else
@@ -1023,10 +1031,9 @@ namespace RanksPointsNamespace
                     if (config.PointsForDeath != 0)
                     {
                         string DeathMessageColor = ReplaceColorPlaceholders(config.DeathMessageColor);            
-                        var deathPointsTask = AddOrRemovePointsAsync(victimSteamId, config.PointsForDeath, deathEvent.Userid, config.DeathMessage, DeathMessageColor);
+                        var deathPointsTask = AddOrRemovePoints(victimSteamId, config.PointsForDeath, deathEvent.Userid, config.DeathMessage, DeathMessageColor);
                     }
                     var updateKillsOrDeathsTask = UpdateKillsOrDeathsAsync(victimSteamId, false);
-                    HandleAsyncOperation(updateKillsOrDeathsTask);
 
                     if (deathEvent.Attacker != null && IsValidPlayer(deathEvent.Attacker))
                     {
@@ -1036,44 +1043,39 @@ namespace RanksPointsNamespace
                         if (config.PointsForKill != 0)
                         {
                             string KillMessageColor = ReplaceColorPlaceholders(config.KillMessageColor);                                   
-                            var killPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForKill, deathEvent.Attacker, config.KillMessage, KillMessageColor);
+                            var killPointsTask = AddOrRemovePoints(killerSteamId, config.PointsForKill, deathEvent.Attacker, config.KillMessage, KillMessageColor);
                         }
                         var updateKillsTask = UpdateKillsOrDeathsAsync(killerSteamId, true);
-                        HandleAsyncOperation(updateKillsTask);
 
                         if (deathEvent.Weapon == "awp" && deathEvent.Noscope && config.PointsForNoScopeAWP != 0)
                         {
                             string NoScopeAWPMessageColor = ReplaceColorPlaceholders(config.NoScopeAWPMessageColor);   
-                            var noScopeTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForNoScopeAWP, deathEvent.Attacker, config.NoScopeAWPMessage, NoScopeAWPMessageColor);
+                            var noScopeTask = AddOrRemovePoints(killerSteamId, config.PointsForNoScopeAWP, deathEvent.Attacker, config.NoScopeAWPMessage, NoScopeAWPMessageColor);
                         }
                         
                         if (deathEvent.Headshot && config.PointsForHeadshot != 0)
                         {
                             string HeadshotMessageColor = ReplaceColorPlaceholders(config.HeadshotMessageColor);  
-                            var headshotPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForHeadshot, deathEvent.Attacker, config.HeadshotMessage, HeadshotMessageColor);
+                            var headshotPointsTask = AddOrRemovePoints(killerSteamId, config.PointsForHeadshot, deathEvent.Attacker, config.HeadshotMessage, HeadshotMessageColor);
                             var updateHeadshotsTask = UpdateHeadshotsAsync(killerSteamId);
-                            HandleAsyncOperation(updateHeadshotsTask);
                         } 
                         
                         if (deathEvent.Penetrated > 0 && config.PointsForWallbang != 0)
                         {
                             string wallbangMessageColor = ReplaceColorPlaceholders(config.WallbangMessageColor);
-                            var wallbangPointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForWallbang, deathEvent.Attacker, config.WallbangMessage, wallbangMessageColor);
-                            HandleAsyncOperation(wallbangPointsTask);
+                            var wallbangPointsTask = AddOrRemovePoints(killerSteamId, config.PointsForWallbang, deathEvent.Attacker, config.WallbangMessage, wallbangMessageColor);
                         }   
 
                         if (deathEvent.Thrusmoke && config.PointsForKillThroughSmoke != 0)
                         {
                             string messageColor = ReplaceColorPlaceholders(config.KillThroughSmokeMessageColor);
-                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForKillThroughSmoke, deathEvent.Attacker, config.KillThroughSmokeMessage, messageColor);
-                            HandleAsyncOperation(pointsTask);
+                            var pointsTask = AddOrRemovePoints(killerSteamId, config.PointsForKillThroughSmoke, deathEvent.Attacker, config.KillThroughSmokeMessage, messageColor);
                         }
 
                         if (deathEvent.Attackerblind && config.PointsForBlindKill != 0)
                         {
                             string messageColor = ReplaceColorPlaceholders(config.BlindKillMessageColor);
-                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, config.PointsForBlindKill, deathEvent.Attacker, config.BlindKillMessage, messageColor);
-                            HandleAsyncOperation(pointsTask);
+                            var pointsTask = AddOrRemovePoints(killerSteamId, config.PointsForBlindKill, deathEvent.Attacker, config.BlindKillMessage, messageColor);
                         }                        
 
                         var killerWeapon = deathEvent.Weapon.ToLowerInvariant();
@@ -1091,7 +1093,7 @@ namespace RanksPointsNamespace
                         if (weaponConfig != null)
                         {
                             string messageColor = ReplaceColorPlaceholders(weaponConfig.MessageColor);
-                            var pointsTask = AddOrRemovePointsAsync(killerSteamId, weaponConfig.Points, deathEvent.Attacker, weaponConfig.KillMessage, messageColor);
+                            var pointsTask = AddOrRemovePoints(killerSteamId, weaponConfig.Points, deathEvent.Attacker, weaponConfig.KillMessage, messageColor);
                         }                                         
                     }
                     if (deathEvent.Assister != null && IsValidPlayer(deathEvent.Assister) && config.PointsForAssist != 0)
@@ -1100,9 +1102,8 @@ namespace RanksPointsNamespace
                         var assisterSteamId = ConvertSteamID64ToSteamID(assisterSteamId64);
 
                         string AssistMessageColor = ReplaceColorPlaceholders(config.AssistMessageColor);  
-                        var assistPointsTask = AddOrRemovePointsAsync(assisterSteamId, config.PointsForAssist, deathEvent.Assister, config.AssistMessage, AssistMessageColor);
+                        var assistPointsTask = AddOrRemovePoints(assisterSteamId, config.PointsForAssist, deathEvent.Assister, config.AssistMessage, AssistMessageColor);
                         var updateAssistsTask = UpdateAssistsAsync(assisterSteamId);
-                        HandleAsyncOperation(updateAssistsTask);
                     }                                                          
                 }
             }
@@ -1120,50 +1121,56 @@ namespace RanksPointsNamespace
 
         private async Task UpdateHeadshotsAsync(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var updateQuery = $"UPDATE {dbConfig.Name} SET headshots = headshots + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+            try
+            {            
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET headshots = headshots + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateHeadshotsAsync: {ex.Message}");
+            }                
         }
 
         private async Task UpdateAssistsAsync(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                var updateQuery = $"UPDATE {dbConfig.Name} SET assists = assists + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+            try
+            {            
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET assists = assists + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateAssistsAsync: {ex.Message}");
+            }                
         }
         private async Task UpdateKillsOrDeathsAsync(string steamId, bool isKill)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
-            {
-                await connection.OpenAsync();
-                string columnToUpdate = isKill ? "kills" : "deaths";
-                var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
-                await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
-            }
-        }
-        private async Task<int> AddOrRemovePointsAsync(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
-        {
-            if (string.IsNullOrEmpty(steamId))
-            {
-                return 0;
-            }
-
-            if (playerController != null && !playerController.IsBot)
-            {
-                if (config.EnableSpecialNicknameBonus && playerController.PlayerName.Contains(config.SpecialNicknameContains, StringComparison.OrdinalIgnoreCase))
+            try
+            {              
+                using (var connection = new MySqlConnection(ConnectionString))
                 {
-                    if (points > 0 && config.BonusMultiplierForSpecialNickname > 1)
-                    {
-                        points = (int)(points * config.BonusMultiplierForSpecialNickname);
-                    }
+                    await connection.OpenAsync();
+                    string columnToUpdate = isKill ? "kills" : "deaths";
+                    var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateKillsOrDeathsAsync: {ex.Message}");
+            }                
+        }
+        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points)
+        {
             int updatedPoints = 0;
 
             try
@@ -1185,44 +1192,66 @@ namespace RanksPointsNamespace
                         await transaction.CommitAsync();
                     }
                 }
-
-                Action chatUpdateAction = () =>
-                {
-                    if (playerController != null && playerController.IsValid && !playerController.IsBot)
-                    {
-                        string sign = points >= 0 ? "+" : "-";
-                        string rawMessage = config.PointsChangeMessage
-                            .Replace("{COLOR}", messageColor)
-                            .Replace("{POINTS}", updatedPoints.ToString())
-                            .Replace("{SIGN}", sign)
-                            .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
-                            .Replace("{REASON}", reason);
-
-                        string formattedMessage = ReplaceColorPlaceholders(rawMessage);
-                        playerController.PrintToChat(formattedMessage);
-                    }
-                };
-
-                lock (_pendingActions)
-                {
-                    _pendingActions.Add(chatUpdateAction);
-                }
-
-                Server.NextFrame(() =>
-                {
-                    lock (_pendingActions)
-                    {
-                        chatUpdateAction();
-                        _pendingActions.Remove(chatUpdateAction);
-                    }
-                });
-
-                await CheckAndUpdateRankAsync(steamId, updatedPoints);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in AddOrRemovePoints: {ex.Message}");
+                Console.WriteLine($"Error in UpdatePlayerPointsAsync: {ex.Message}");
             }
+
+            return updatedPoints;
+        }
+        private int AddOrRemovePoints(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
+        {
+            if (string.IsNullOrEmpty(steamId))
+            {
+                return 0;
+            }
+
+            if (playerController != null && !playerController.IsBot)
+            {
+                if (config.EnableSpecialNicknameBonus && playerController.PlayerName.Contains(config.SpecialNicknameContains, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (points > 0 && config.BonusMultiplierForSpecialNickname > 1)
+                    {
+                        points = (int)(points * config.BonusMultiplierForSpecialNickname);
+                    }
+                }
+            }
+
+            int updatedPoints = UpdatePlayerPointsAsync(steamId, points).GetAwaiter().GetResult();
+
+            Action chatUpdateAction = () =>
+            {
+                if (playerController != null && playerController.IsValid && !playerController.IsBot)
+                {
+                    string sign = points >= 0 ? "+" : "-";
+                    string rawMessage = config.PointsChangeMessage
+                        .Replace("{COLOR}", messageColor)
+                        .Replace("{POINTS}", updatedPoints.ToString())
+                        .Replace("{SIGN}", sign)
+                        .Replace("{CHANGE_POINTS}", Math.Abs(points).ToString())
+                        .Replace("{REASON}", reason);
+
+                    string formattedMessage = ReplaceColorPlaceholders(rawMessage);
+                    playerController.PrintToChat(formattedMessage);
+                }
+            };
+
+            lock (_pendingActions)
+            {
+                _pendingActions.Add(chatUpdateAction);
+            }
+
+            Server.NextFrame(() =>
+            {
+                lock (_pendingActions)
+                {
+                    chatUpdateAction();
+                    _pendingActions.Remove(chatUpdateAction);
+                }
+            });
+
+            CheckAndUpdateRankAsync(steamId, updatedPoints);
 
             return updatedPoints;
         }
@@ -1246,42 +1275,56 @@ namespace RanksPointsNamespace
             if (newRankIndex != -1)
             {
                 var newRank = ranksConfig[newRankIndex];
-                using (var connection = new MySqlConnection(ConnectionString))
+                
+                int currentRankId = await GetCurrentRankId(steamId);
+
+                if (currentRankId != newRank.Id)
                 {
-                    await connection.OpenAsync();
-                    var currentRankQuery = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
-                    var currentRankId = await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+                    bool isRankUpdated = await UpdatePlayerRankAsync(steamId, newRank.Id);
 
-                    if (currentRankId != newRank.Id)
+                    if (isRankUpdated)
                     {
-                        var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
-                        await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRank.Id, SteamID = steamId });
-
                         bool isRankUp = newRank.Id > currentRankId;
 
-                        Action rankUpdateAction = () =>
-                        {
-                            var player = FindPlayerBySteamID(ConvertSteamIDToSteamID64(steamId));
-                            if (player != null)
-                            {
-                                SetPlayerClanTag(player);
-                                NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
-                            }
-                        };
-
-                        _pendingActions.Add(rankUpdateAction);
-                        Server.NextFrame(() =>
-                        {
-                            rankUpdateAction();
-                            _pendingActions.Remove(rankUpdateAction);
-                        });
+                        NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
 
                         return true;
                     }
                 }
             }
+
             return false;
         }
+
+        private async Task<int> GetCurrentRankId(string steamId)
+        {
+            using (var connection = new MySqlConnection(ConnectionString))
+            {
+                await connection.OpenAsync();
+                var currentRankQuery = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
+                return await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+            }
+        }
+
+        private async Task<bool> UpdatePlayerRankAsync(string steamId, int newRankId)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
+                    await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRankId, SteamID = steamId });
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePlayerRankAsync: {ex.Message}");
+                return false;
+            }
+        }
+
         private List<WeaponPoints> LoadWeaponPointsConfig()
         {
             var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
@@ -1313,23 +1356,24 @@ namespace RanksPointsNamespace
 
             return weaponPoints;
         }
-
         private void NotifyPlayerOfRankChange(string steamId, string newRankName, bool isRankUp)
         {
-            string steamId64 = ConvertSteamIDToSteamID64(steamId);
-            string message = isRankUp ? config.RankUpMessage.Replace("{RANK_NAME}", newRankName) 
-                                    : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
-
-            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            Server.NextFrame(() =>
             {
-                if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamId64)
-                {
-                    player.PrintToCenter(message);
-                    break;
-                }
-            }
-        }
+                string steamId64 = ConvertSteamIDToSteamID64(steamId);
+                string message = isRankUp ? config.RankUpMessage.Replace("{RANK_NAME}", newRankName) 
+                                        : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
 
+                foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+                {
+                    if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamId64)
+                    {
+                        player.PrintToCenter(message);
+                        break;
+                    }
+                }
+            });
+        }
         private string ConvertSteamIDToSteamID64(string steamID)
         {
             if (string.IsNullOrEmpty(steamID) || !steamID.StartsWith("STEAM_"))
