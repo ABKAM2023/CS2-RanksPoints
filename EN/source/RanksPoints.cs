@@ -20,11 +20,11 @@ using Dapper;
 
 namespace RanksPointsNamespace
 {    
-    public class RanksPoints : BasePlugin
+    public partial class RanksPoints : BasePlugin
     {
-        private const string PluginAuthor = "ABKAM";
+        private const string PluginAuthor = "ABKAM - Modified by maketou";
         private const string PluginName = "[RanksPoints]";
-        private const string PluginVersion = "2.0.7";
+        private const string PluginVersion = "2.0.7 - Fix some";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -32,6 +32,9 @@ namespace RanksPointsNamespace
         private bool isActiveRoundForPoints;       
         private HashSet<string> activePlayers = new HashSet<string>();  
         private Dictionary<string, PlayerResetInfo> playerResetTimes = new Dictionary<string, PlayerResetInfo>();
+        Dictionary<uint, PlayerIteam> g_Player = new Dictionary<uint, PlayerIteam>();
+
+
         public class PluginConfig
         {
             public int MinPlayersForExperience { get; set; } = 4; 
@@ -490,6 +493,8 @@ namespace RanksPointsNamespace
             RegisterEventHandler<EventHostageFollows>(OnHostageFollows);
             RegisterEventHandler<EventHostageStopsFollowing>(OnHostageStopsFollowing);
             RegisterEventHandler<EventHostageRescued>(OnHostageRescued);
+            AddCommandListener("say", OnPlayerChat);
+            AddCommandListener("say_team", OnPlayerChatTeam);
             isActiveRoundForPoints = true; 
             CreateTable();
             config = LoadOrCreateConfig();
@@ -690,6 +695,14 @@ namespace RanksPointsNamespace
         private void OnClientConnected(int playerSlot)
         {
             var player = Utilities.GetPlayerFromSlot(playerSlot);
+            var client = player.Index;
+            g_Player[client] = new PlayerIteam
+            {
+                ClanTag = null,
+                value = 0,
+                valuechange = 0,
+                rank = 0
+            };
             if (player != null && !player.IsBot)
             {
                 var steamId64 = player.SteamID.ToString();
@@ -697,10 +710,10 @@ namespace RanksPointsNamespace
                 var playerName = GetPlayerNickname(steamId64);
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                var updateTask = UpdatePlayerConnectionAsync(steamId, playerName, currentTime);
+                var getdateTask = GetPlayerConnectionAsync(steamId, playerName, currentTime, client, player);
 
                 activePlayers.Add(steamId);  
-                SetPlayerClanTag(player);
+
             }
         }
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
@@ -1165,9 +1178,11 @@ namespace RanksPointsNamespace
                 Console.WriteLine($"Error in UpdateKillsOrDeathsAsync: {ex.Message}");
             }                
         }
-        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points)
+        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points, uint client)
         {
             int updatedPoints = 0;
+            updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) points = 0;
 
             try
             {
@@ -1176,14 +1191,9 @@ namespace RanksPointsNamespace
                     await connection.OpenAsync();
                     using (var transaction = await connection.BeginTransactionAsync())
                     {
-                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID FOR UPDATE;";
-                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = value + @NewPoints WHERE steam = @SteamID;";
 
-                        updatedPoints = currentPoints + points;
-                        if (updatedPoints < 0) updatedPoints = 0;
-
-                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
-                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = points, SteamID = steamId }, transaction);
 
                         await transaction.CommitAsync();
                     }
@@ -1198,6 +1208,8 @@ namespace RanksPointsNamespace
         }
         private int AddOrRemovePoints(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
+            var client = playerController.Index;
+
             if (string.IsNullOrEmpty(steamId))
             {
                 return 0;
@@ -1214,7 +1226,12 @@ namespace RanksPointsNamespace
                 }
             }
 
-            int updatedPoints = UpdatePlayerPointsAsync(steamId, points).GetAwaiter().GetResult();
+            //int updatedPoints = UpdatePlayerPointsAsync(steamId, points).GetAwaiter().GetResult();
+            int updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) updatedPoints = 0;
+            _ = UpdatePlayerPointsAsync(steamId, points, client);
+            g_Player[playerController.Index].value = updatedPoints;
+
 
             Action chatUpdateAction = () =>
             {
