@@ -24,7 +24,7 @@ namespace RanksPointsNamespace
     {
         private const string PluginAuthor = "ABKAM";
         private const string PluginName = "[RanksPoints]";
-        private const string PluginVersion = "2.0.7";
+        private const string PluginVersion = "2.0.8";
         private const string DbConfigFileName = "dbconfig.json";
         private DatabaseConfig? dbConfig;
         private PluginConfig config;  
@@ -673,27 +673,18 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
-
-        private async Task UpdatePlayerConnectionAsync(string steamId, string playerName, long currentTime)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(ConnectionString))
-                {
-                    await connection.OpenAsync();
-                    var insertQuery = $"INSERT INTO {dbConfig.Name} (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
-                    await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in UpdatePlayerConnectionAsync: {ex.Message}");
-            }
-        }
-
+        Dictionary<uint, PlayerIteam> g_Player = new Dictionary<uint, PlayerIteam>();
         private void OnClientConnected(int playerSlot)
         {
             var player = Utilities.GetPlayerFromSlot(playerSlot);
+            var client = player.Index;
+            g_Player[client] = new PlayerIteam
+            {
+                ClanTag = null,
+                value = 0,
+                valuechange = 0,
+                rank = 0
+            };
             if (player != null && !player.IsBot)
             {
                 var steamId64 = player.SteamID.ToString();
@@ -701,12 +692,73 @@ namespace RanksPointsNamespace
                 var playerName = GetPlayerNickname(steamId64);
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                var updateTask = UpdatePlayerConnectionAsync(steamId, playerName, currentTime);
+                var getdateTask = GetPlayerConnectionAsync(steamId, playerName, currentTime, client, player);
 
                 activePlayers.Add(steamId);  
-                SetPlayerClanTag(player);
+
             }
         }
+        private async Task GetPlayerConnectionAsync(string steamId, string playerName, long currentTime, uint client, CCSPlayerController player)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var insertQuery = $"INSERT INTO `{dbConfig.Name}` (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect, name = @Name;";
+                    await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
+                    string query = $"SELECT * FROM `{dbConfig.Name}` WHERE steam = '{steamId}'";
+                    
+                    var playerdata = await connection.QueryFirstOrDefaultAsync(query);
+                    
+                    Server.NextFrame(() => 
+                    {
+                        if (playerdata != null)
+                        {
+                            g_Player[client].value = playerdata.value;
+                            g_Player[client].rank = playerdata.rank;
+
+                            var ranksConfig = LoadRanksConfig();
+                            RankConfig? defaultRank = ranksConfig.FirstOrDefault(r => r.Id == 0);
+                            RankConfig? currentRank = ranksConfig.FirstOrDefault(r => r.Id == g_Player[client].rank);
+                            var rank = currentRank ?? defaultRank;
+
+                            if (rank != null && !string.IsNullOrEmpty(rank.ClanTag))
+                            {
+                                g_Player[client].ClanTag = rank.ClanTag;
+                                player.Clan = rank.ClanTag;
+                            }
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetPlayerConnectionAsync: {ex.Message}");
+                Server.NextFrame(() => Console.WriteLine($"Error processing player data in main thread: {ex.Message}"));
+            }
+        }
+        public class PlayerIteam
+        {
+
+            public string? ClanTag { get; set; }
+            public int? value { get; set; }
+            public int? valuechange { get; set; }
+            public int? rank { get; set; }
+
+            public PlayerIteam()
+            {
+                Init();
+            }
+
+            public void Init()
+            {
+                ClanTag = null;
+                value = 0;
+                valuechange = 0;    
+                rank = 0;
+            }
+        }        
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
         {
             if (isWarmup)
@@ -728,6 +780,7 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
+        
         private HookResult OnMatchStart(EventRoundAnnounceMatchStart matchStartEvent, GameEventInfo info)
         {
             isWarmup = false;
@@ -817,7 +870,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET shoots = shoots + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET shoots = shoots + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -834,7 +887,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET hits = hits + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET hits = hits + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -874,14 +927,14 @@ namespace RanksPointsNamespace
                 {
                     await connection.OpenAsync();
 
-                    var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM {dbConfig.Name} WHERE steam = @SteamID", new { SteamID = steamId });
-
+                    var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM `{dbConfig.Name}` WHERE steam = @SteamID", new { SteamID = steamId });
+                    
                     if (playerData != null)
                     {
                         var sessionTime = currentTime - playerData.lastconnect;
                         var newPlaytime = playerData.playtime + sessionTime;
 
-                        var updateQuery = $"UPDATE {dbConfig.Name} SET playtime = @Playtime WHERE steam = @SteamID;";
+                        var updateQuery = $"UPDATE `{dbConfig.Name}` SET playtime = @Playtime WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
                     }
                 }
@@ -1126,7 +1179,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET headshots = headshots + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET headshots = headshots + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1143,7 +1196,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET assists = assists + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET assists = assists + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1160,7 +1213,7 @@ namespace RanksPointsNamespace
                 {
                     await connection.OpenAsync();
                     string columnToUpdate = isKill ? "kills" : "deaths";
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET `{columnToUpdate}` = `{columnToUpdate}` + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1169,9 +1222,11 @@ namespace RanksPointsNamespace
                 Console.WriteLine($"Error in UpdateKillsOrDeathsAsync: {ex.Message}");
             }                
         }
-        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points)
+        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points, uint client)
         {
             int updatedPoints = 0;
+            updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) points = 0;
 
             try
             {
@@ -1180,14 +1235,9 @@ namespace RanksPointsNamespace
                     await connection.OpenAsync();
                     using (var transaction = await connection.BeginTransactionAsync())
                     {
-                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID FOR UPDATE;";
-                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+                        var updateQuery = $"UPDATE `{dbConfig.Name}` SET value = value + @NewPoints WHERE steam = @SteamID;";
 
-                        updatedPoints = currentPoints + points;
-                        if (updatedPoints < 0) updatedPoints = 0;
-
-                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
-                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = points, SteamID = steamId }, transaction);
 
                         await transaction.CommitAsync();
                     }
@@ -1202,6 +1252,8 @@ namespace RanksPointsNamespace
         }
         private int AddOrRemovePoints(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
+            var client = playerController.Index;
+
             if (string.IsNullOrEmpty(steamId))
             {
                 return 0;
@@ -1217,8 +1269,12 @@ namespace RanksPointsNamespace
                     }
                 }
             }
+            
+            int updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) updatedPoints = 0;
+            _ = UpdatePlayerPointsAsync(steamId, points, client);
+            g_Player[playerController.Index].value = updatedPoints;
 
-            int updatedPoints = UpdatePlayerPointsAsync(steamId, points).GetAwaiter().GetResult();
 
             Action chatUpdateAction = () =>
             {
@@ -1258,6 +1314,7 @@ namespace RanksPointsNamespace
         private async Task<bool> CheckAndUpdateRankAsync(string steamId, int updatedPoints)
         {
             var ranksConfig = LoadRanksConfig();
+
             var newRankIndex = -1;
 
             for (int i = 0; i < ranksConfig.Count; i++)
@@ -1271,40 +1328,63 @@ namespace RanksPointsNamespace
                     break;
                 }
             }
-
+    
             if (newRankIndex != -1)
             {
                 var newRank = ranksConfig[newRankIndex];
-                
-                int currentRankId = await GetCurrentRankId(steamId);
 
+                int currentRankId = await GetCurrentRankId(steamId);
                 if (currentRankId != newRank.Id)
                 {
                     bool isRankUpdated = await UpdatePlayerRankAsync(steamId, newRank.Id);
-
+            
                     if (isRankUpdated)
                     {
                         bool isRankUp = newRank.Id > currentRankId;
-
                         NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                        
+                        string steamId64 = ConvertSteamIDToSteamID64(steamId);
+                        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+                        {
+                            if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamId64)
+                            {
+                                Server.NextFrame(() =>
+                                {
+                                    player.Clan = $"[{Regex.Replace(newRank.Name, @"\{[A-Za-z]+}", "")}]";
+                                    Utilities.SetStateChanged(player, "CCSPlayerController", "m_szClan");
+                                });
+                            }
+                        }
 
+                        
                         return true;
                     }
+
+
                 }
             }
 
             return false;
         }
-
         private async Task<int> GetCurrentRankId(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                await connection.OpenAsync();
-                var currentRankQuery = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
-                return await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var currentRankQuery = $"SELECT `rank` FROM `{dbConfig.Name}` WHERE `steam` = @SteamID;";
+                    var rankId = await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+                    return rankId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GetCurrentRankId] Error fetching rank for {steamId}: {ex.Message}");
+                return -1; 
             }
         }
+
 
         private async Task<bool> UpdatePlayerRankAsync(string steamId, int newRankId)
         {
@@ -1313,9 +1393,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
-                    await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRankId, SteamID = steamId });
-                    return true;
+                    var updateRankQuery = $"UPDATE `{dbConfig.Name}` SET `rank` = @NewRankId WHERE `steam` = @SteamID;";
+                    var affectedRows = await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRankId, SteamID = steamId });
+                    return affectedRows > 0; 
                 }
             }
             catch (Exception ex)
@@ -1324,7 +1404,6 @@ namespace RanksPointsNamespace
                 return false;
             }
         }
-
         private List<WeaponPoints> LoadWeaponPointsConfig()
         {
             var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
@@ -1362,7 +1441,7 @@ namespace RanksPointsNamespace
             {
                 string steamId64 = ConvertSteamIDToSteamID64(steamId);
                 string message = isRankUp ? config.RankUpMessage.Replace("{RANK_NAME}", newRankName) 
-                                        : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
+                    : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
 
                 foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
                 {
@@ -1437,7 +1516,17 @@ namespace RanksPointsNamespace
             }
             return null;
         }
-
+        private CCSPlayerController FindPlayerByUserId(int userId)
+        {
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            {
+                if (player != null && player.IsValid && !player.IsBot && player.UserId == userId)
+                {
+                    return player;
+                }
+            }
+            return null;
+        }
 
         private void CreateDbConfigIfNotExists()
         {
@@ -1484,9 +1573,9 @@ namespace RanksPointsNamespace
                 await connection.OpenAsync();
                 var playerData = await connection.QueryFirstOrDefaultAsync($@"
                     SELECT p.rank, p.value as points, p.kills, p.deaths, p.playtime,
-                        (SELECT COUNT(*) FROM {dbConfig.Name} WHERE value > p.value) + 1 as place,
-                        (SELECT COUNT(*) FROM {dbConfig.Name}) as totalPlayers
-                    FROM {dbConfig.Name} p
+                        (SELECT COUNT(*) FROM `{dbConfig.Name}` WHERE value > p.value) + 1 as place,
+                        (SELECT COUNT(*) FROM `{dbConfig.Name}`) as totalPlayers
+                    FROM `{dbConfig.Name}` p
                     WHERE p.steam = @SteamID;", new { SteamID = steamId });
 
                 if (playerData == null)
@@ -1589,12 +1678,12 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
-                        SELECT steam, name, value, rank
-                        FROM {dbConfig.Name}
+                    var topPlayersQuery = @"
+                        SELECT steam, name, value, `rank`
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY value DESC
                         LIMIT 10;";
-
+                    
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
                     if (topPlayers.Any())
@@ -1652,11 +1741,12 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
+                    var topPlayersQuery = @"
                         SELECT steam, name, kills
-                        FROM {dbConfig.Name}
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY kills DESC
                         LIMIT 10;";
+
 
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
@@ -1708,7 +1798,7 @@ namespace RanksPointsNamespace
                     connection.Open();
                     var topPlayersQuery = $@"
                         SELECT steam, name, deaths
-                        FROM {dbConfig.Name}
+                        FROM `{dbConfig.Name}`
                         ORDER BY deaths DESC
                         LIMIT 10;";
 
@@ -1761,11 +1851,15 @@ namespace RanksPointsNamespace
                 {
                     connection.Open();
                     var topPlayersQuery = $@"
-                        SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
-                        FROM {dbConfig.Name}
+                        SELECT steam, name, kills, deaths, 
+                        CASE
+                            WHEN deaths = 0 THEN kills
+                            ELSE kills / deaths
+                        END AS kdr
+                        FROM `{dbConfig.Name}`
                         ORDER BY kdr DESC, kills DESC
                         LIMIT 10;";
-
+                    
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
                     if (topPlayers.Any())
@@ -1814,9 +1908,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
+                    var topPlayersQuery = @"
                         SELECT steam, name, playtime
-                        FROM {dbConfig.Name}
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY playtime DESC
                         LIMIT 10;";
 
@@ -1884,11 +1978,18 @@ namespace RanksPointsNamespace
 
         private void ResetPlayerStats(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
-                connection.Execute(resetQuery, new { SteamID = steamId });
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var resetQuery = $"UPDATE `{dbConfig.Name}` SET kills = 0, deaths = 0, `value` = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
+                    int affectedRows = connection.Execute(resetQuery, new { SteamID = steamId });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating player stats: {ex.Message}");
             }
         }
 
@@ -2116,7 +2217,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET value = 0, rank = 1 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET `value` = 0, `rank` = 1 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
@@ -2126,7 +2227,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
@@ -2136,7 +2237,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET playtime = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET playtime = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }

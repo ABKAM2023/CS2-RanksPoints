@@ -57,7 +57,7 @@ namespace RanksPointsNamespace
             public string KillThroughSmokeMessage { get; set; } = "kill through smoke"; 
             public string KillThroughSmokeMessageColor { get; set; } = "{Green}";    
             public int PointsForBlindKill { get; set; } = 5; 
-            public string BlindKillMessage { get; set; } = "kill while blinded"; 
+            public string BlindKillMessage { get; set; } = "blind kill"; 
             public string BlindKillMessageColor { get; set; } = "{Yellow}";       
             public bool GivePointsForBotKills { get; set; } = false;        
             public bool EnableClanTags { get; set; } = true;
@@ -74,15 +74,15 @@ namespace RanksPointsNamespace
             public bool EnableSpecialNicknameBonus { get; set; } = true;
             public double BonusMultiplierForSpecialNickname { get; set; } = 1.5; 
             public string SpecialNicknameContains { get; set; } = "example.com";                    
-            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to earn experience.";
-            public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Your experience: {COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]";
+            public string GetActivePlayerCountMsg { get; set; } = "[ {Yellow}RanksPoints {White}] At least {Red}{MIN_PLAYERS} {White}players are required to grant experience.";
+            public string PointsChangeMessage { get; set; } = "[ {Yellow}RanksPoints{White} ] Your experience:{COLOR} {POINTS} [{SIGN}{CHANGE_POINTS} for {REASON}]";
             public string SuicideMessage { get; set; } = "suicide"; 
             public string SuicideMessageColor { get; set; } = "{Red}"; 
             public string DeathMessage { get; set; } = "death"; 
             public string DeathMessageColor { get; set; } = "{Red}"; 
             public string KillMessage { get; set; } = "kill"; 
             public string KillMessageColor { get; set; } = "{Green}";  
-            public string NoScopeAWPMessage { get; set; } = "kill with a no-scope AWP";
+            public string NoScopeAWPMessage { get; set; } = "no-scope AWP kill";
             public string NoScopeAWPMessageColor { get; set; } = "{Blue}";
             public string HeadshotMessage { get; set; } = "headshot"; 
             public string HeadshotMessageColor { get; set; } = "{Yellow}";
@@ -96,7 +96,7 @@ namespace RanksPointsNamespace
             public string MVPMessageColor { get; set; } = "{Gold}";    
             public string BombDefusalMessage { get; set; } = "bomb defusal";          
             public string BombDefusalMessageColor { get; set; } = "{Green}";     
-            public string BombExplodedMessage { get; set; } = "bomb explosion";             
+            public string BombExplodedMessage { get; set; } = "bomb exploded";             
             public string BombExplodedMessageColor { get; set; } = "{Green}";   
             public string BombPlantingMessage { get; set; } = "bomb planting";
             public string BombPlantingMessageColor { get; set; } = "{Green}";  
@@ -112,50 +112,50 @@ namespace RanksPointsNamespace
             public string HostageStopsFollowingMessageColor { get; set; } = "{Red}";
             public string HostageRescuedMessage { get; set; } = "hostage rescued";
             public string HostageRescuedMessageColor { get; set; } = "{Blue}";                                                         
-            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Server Time: {Gold}{PLAY_TIME}";                                                            
+            public string RankCommandMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Rank: {Green}{RANK_NAME} {White}| Position: {Blue}{PLACE}/{TOTAL_PLAYERS} {White}| Experience: {Gold}{POINTS} {White}| Kills: {Green}{KILLS} {White}| Deaths: {Red}{DEATHS} {White}| KDR: {Yellow}{KDR} {White}| Time on Server: {Gold}{PLAY_TIME}";                                                            
             public string TimeFormat { get; set; } = "{0}d {1}h {2}min";   
             public string TopCommandIntroMessage { get; set; } = "[ {Blue}Top Players{White} ]"; 
             public string TopCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {White}{RANK} {Grey}- {Blue}{POINTS} points";
-            public string TopCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players."; 
+            public string TopCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for top players."; 
             public string TopCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command."; 
             public string TopKillsCommandIntroMessage { get; set; } = "[ {Green}Top Players by Kills{White} ]";
             public string TopKillsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Green}{KILLS} kills{White}";
-            public string TopKillsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by kills.";
+            public string TopKillsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for top players by kills.";
             public string TopKillsCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
             public string TopDeathsCommandIntroMessage { get; set; } = "[ {Red}Top Players by Deaths{White} ]";
             public string TopDeathsCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Red}{DEATHS} deaths{White}";
-            public string TopDeathsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by deaths.";
+            public string TopDeathsCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for top players by deaths.";
             public string TopDeathsCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command."; 
             public string TopKDRCommandIntroMessage { get; set; } = "[ {Yellow}Top Players by KDR{White} ]";
             public string TopKDRCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME}{White} - {Yellow}KDR: {KDR}";
-            public string TopKDRCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by KDR.";
+            public string TopKDRCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for top players by KDR.";
             public string TopKDRCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top Players by Server Time{White} ]";
+            public string TopTimeCommandIntroMessage { get; set; } = "[ {Gold}Top Players by Time on Server{White} ]";
             public string TopTimeCommandPlayerMessage { get; set; } = "{INDEX}. {Grey}{NAME} - {Gold}{TIME}{White}";
-            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on top players by server time.";
+            public string TopTimeCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for top players by time on server.";
             public string TopTimeCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
             public string TopTimeFormat { get; set; } = "{0}d {1}h {2}min";
-            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can only reset your statistics once every 3 hours.";
-            public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your statistics have been reset.";
+            public string ResetStatsCooldownMessage { get; set; } = "[ {Red}RanksPoints {White}] You can only reset your stats once every 3 hours.";
+            public string ResetStatsSuccessMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your stats have been reset.";
             public double ResetStatsCooldownHours { get; set; } = 3.0; 
-            public string RanksCommandIntroMessage { get; set; } = "[ {Gold}List of Ranks{White} ]";
+            public string RanksCommandIntroMessage { get; set; } = "[ {Gold}Rank List{White} ]";
             public string RanksCommandRankMessage { get; set; } = "{NAME} - {Green}{EXPERIENCE} experience{White}";
-            public string RanksCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data on ranks.";
+            public string RanksCommandNoDataMessage { get; set; } = "[ {Red}Error{White} ] No data available for ranks.";
             public string RanksCommandErrorMessage { get; set; } = "[ {Red}Error{White} ] An error occurred while executing the command.";
-            public string LvlCommandIntroMessage { get; set; } = "[ {Gold}List of Available Commands{White} ]"; 
-            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Displays your current rank and statistics";
-            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Shows the top-10 players by points";
-            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Shows the top-10 players by kills";  
-            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Shows the top-10 players by deaths";
-            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Shows the top-10 players by KDR";
-            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Shows the top-10 players by server time";
-            public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Reset your statistics (can be used once every 3 hours)";
-            public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Displays a list of all ranks and the experience needed to achieve them";   
-            public string TagRankCommandDescription { get; set; } = "- {Green}!tagrank {White}- Toggles the display of your clan tag on or off";    
-            public string RankUpMessage { get; set; } = "Your rank has been promoted to {RANK_NAME}!";
-            public string RankDownMessage { get; set; } = "Your rank has been demoted to {RANK_NAME}.";
-            public string TagRankEnabledMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your clan tag will be displayed again, starting from the next round.";
-            public string TagRankDisabledMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your clan tag will no longer be displayed, starting from the next round.";
+            public string LvlCommandIntroMessage { get; set; } = "[ {Gold}Available Commands List{White} ]"; 
+            public string RankCommandDescription { get; set; } = "- {Green}!rank {White}- Shows your current rank and stats";
+            public string TopCommandDescription { get; set; } = "- {Green}!top {White}- Shows top 10 players by points";
+            public string TopKillsCommandDescription { get; set; } = "- {Green}!topkills {White}- Shows top 10 players by kills";  
+            public string TopDeathsCommandDescription { get; set; } = "- {Green}!topdeaths {White}- Shows top 10 players by deaths";
+            public string TopKDRCommandDescription { get; set; } = "- {Green}!topkdr {White}- Shows top 10 players by KDR";
+            public string TopTimeCommandDescription { get; set; } = "- {Green}!toptime {White}- Shows top 10 players by time on server";
+            public string ResetStatsCommandDescription { get; set; } = "- {Green}!resetstats {White}- Resets your stats (can be used once every 3 hours)";
+            public string RanksCommandDescription { get; set; } = "- {Green}!ranks {White}- Shows a list of all ranks and the experience required to achieve them";   
+            public string TagRankCommandDescription { get; set; } = "- {Green}!tagrank {White}- Enables or disables showing your clan tag";    
+            public string RankUpMessage { get; set; } = "Your rank has been upgraded to {RANK_NAME}!";
+            public string RankDownMessage { get; set; } = "Your rank has been downgraded to {RANK_NAME}.";
+            public string TagRankEnabledMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your clan tag will be displayed again starting next round.";
+            public string TagRankDisabledMessage { get; set; } = "[ {Yellow}RanksPoints {White}] Your clan tag will no longer be displayed starting next round.";
         } 
         public class RankConfig
         {
@@ -170,49 +170,51 @@ namespace RanksPointsNamespace
 
             stringBuilder.AppendLine("# Configuration file for RankPoints");
             stringBuilder.AppendLine();
-            stringBuilder.AppendLine("# Points allocation");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for Kill - the number of points added to a player for killing an enemy.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Points deducted for Death - the number of points subtracted from a player for dying.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for Assist - the number of points added to a player for assisting in a kill.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Points for Suicide - the number of points subtracted from a player for committing suicide.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for Headshot - additional points for a kill with a headshot.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for Round Win - the number of points added to a player for their team's victory in a round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for Round Loss - the number of points subtracted from a player for their team's loss in a round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Points for MVP - the number of points added to a player for earning the MVP title of the round.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for No-Scope AWP Kill - additional points for a kill without using the scope.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Points for Bomb Defusal");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombExploded), config.PointsForBombExploded, "Points for Bomb Explosion");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Points for Bomb Planting - the number of points added to a player for successfully planting a bomb.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDropping), config.PointsForBombDropping, "Points for Bomb Dropping - the number of points subtracted from a player for dropping the bomb.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPickup), config.PointsForBombPickup, "Points for Bomb Pickup - the number of points added to a player for picking up the bomb.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForWallbang), config.PointsForWallbang, "Points for Wallbang Kill.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageFollows), config.PointsForHostageFollows, "Points for Hostage Follow");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageStopsFollowing), config.PointsForHostageStopsFollowing, "Points for Hostage Loss");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageRescued), config.PointsForHostageRescued, "Points for Hostage Rescue");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKillThroughSmoke), config.PointsForKillThroughSmoke, "Points for Kill Through Smoke - the number of points added to a player for killing an enemy through a smoke screen.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBlindKill), config.PointsForBlindKill, "Points for Blind Kill - the number of points added to a player for killing while blinded.");
+            stringBuilder.AppendLine("# Number of points awarded");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKill), config.PointsForKill, "Points for kill - the number of points awarded to a player for killing an opponent.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForDeath), config.PointsForDeath, "Points deducted for death - the number of points deducted from a player for dying.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForAssist), config.PointsForAssist, "Points for assist - the number of points awarded to a player for assisting in a kill.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForSuicide), config.PointsForSuicide, "Points for suicide - the number of points deducted from a player for committing suicide.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHeadshot), config.PointsForHeadshot, "Points for headshot - additional points for killing with a headshot.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundWin), config.PointsPerRoundWin, "Points for round win - the number of points awarded to a player for winning a round for their team.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerRoundLoss), config.PointsPerRoundLoss, "Points for round loss - the number of points deducted from a player for losing a round for their team.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsPerMVP), config.PointsPerMVP, "Points for MVP - the number of points awarded to a player for receiving the MVP title of a round.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForNoScopeAWP), config.PointsForNoScopeAWP, "Points for no-scope AWP kill - additional points for killing without using the scope.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDefusal), config.PointsForBombDefusal, "Points for bomb defusal");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombExploded), config.PointsForBombExploded, "Points for bomb exploded");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPlanting), config.PointsForBombPlanting, "Points for bomb planting - the number of points awarded to a player for successfully planting the bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombDropping), config.PointsForBombDropping, "Points for bomb dropping - the number of points deducted from a player for dropping the bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBombPickup), config.PointsForBombPickup, "Points for bomb pickup - the number of points awarded to a player for picking up the bomb.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForWallbang), config.PointsForWallbang, "Points for wallbang - points for killing through a wall.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageFollows), config.PointsForHostageFollows, "Points for hostage follows");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageStopsFollowing), config.PointsForHostageStopsFollowing, "Points for stopping hostage following");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForHostageRescued), config.PointsForHostageRescued, "Points for hostage rescued");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForKillThroughSmoke), config.PointsForKillThroughSmoke, "Points for kill through smoke - the number of points awarded to a player for killing an enemy through a smoke screen.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.PointsForBlindKill), config.PointsForBlindKill, "Points for blind kill - the number of points awarded to a player for killing while blinded.");
+
 
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# RanksPoints parameters");
-            stringBuilder.AppendLine("# Display of clan tags for player ranks. true - enabled, false - disabled.");
+            stringBuilder.AppendLine("# Display clan tags for player ranks. true - enabled, false - disabled.");
             stringBuilder.AppendLine($"EnableClanTags: {config.EnableClanTags}");
-            stringBuilder.AppendLine("# Minimum number of players required for earning experience - players earn experience only if at least this number of players are on the server.");
+            stringBuilder.AppendLine("# Minimum number of players for experience to be granted - players only gain experience if this number of players is on the server.");
             stringBuilder.AppendLine($"GetActivePlayerCountMsg: \"{EscapeMessage(config.GetActivePlayerCountMsg)}\"");
             AppendConfigValue(stringBuilder, nameof(config.MinPlayersForExperience), config.MinPlayersForExperience);
-            stringBuilder.AppendLine("# Enabling or disabling additional experience for special nicknames");
+            stringBuilder.AppendLine("# Enable or disable extra experience for special nicknames");
             stringBuilder.AppendLine($"EnableSpecialNicknameBonus: {config.EnableSpecialNicknameBonus.ToString().ToLower()}");
             stringBuilder.AppendLine("# Experience multiplier for special nicknames");
             stringBuilder.AppendLine($"BonusMultiplierForSpecialNickname: {config.BonusMultiplierForSpecialNickname}");
-            stringBuilder.AppendLine("# String to look for in a nickname to apply the multiplier");
+            stringBuilder.AppendLine("# String to search in the nickname for applying the multiplier");
             stringBuilder.AppendLine($"SpecialNicknameContains: \"{EscapeMessage(config.SpecialNicknameContains)}\"");
-            stringBuilder.AppendLine("# Enabling or disabling points for killing bots. true - enabled, false - disabled.");
+            stringBuilder.AppendLine("# Enable or disable points for bot kills. true - enabled, false - disabled.");
             AppendConfigValue(stringBuilder, nameof(config.GivePointsForBotKills), config.GivePointsForBotKills);
+
 
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# All RanksPoints messages");
-            stringBuilder.AppendLine("# Messages upon gaining experience");                  
+            stringBuilder.AppendLine("# Experience gain messages");                  
             stringBuilder.AppendLine($"PointsChangeMessage: \"{EscapeMessage(config.PointsChangeMessage)}\"");
-            stringBuilder.AppendLine("# Events");        
+            stringBuilder.AppendLine("# Events");            
             stringBuilder.AppendLine($"SuicideMessage: \"{EscapeMessage(config.SuicideMessage)}\"");
             stringBuilder.AppendLine($"SuicideMessageColor: \"{EscapeMessage(config.SuicideMessageColor)}\"");
             stringBuilder.AppendLine($"DeathMessage: \"{EscapeMessage(config.DeathMessage)}\"");
@@ -254,24 +256,24 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"BlindKillMessage: \"{EscapeMessage(config.BlindKillMessage)}\"");
             stringBuilder.AppendLine($"BlindKillMessageColor: \"{EscapeMessage(config.BlindKillMessageColor)}\"");
 
-           
+
             stringBuilder.AppendLine();
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank promotion.");
-            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank demotion.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankUpMessage), config.RankUpMessage, "Message for rank upgrade.");
+            AppendConfigValueWithComment(stringBuilder, nameof(config.RankDownMessage), config.RankDownMessage, "Message for rank downgrade.");
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# !rank");
-            stringBuilder.AppendLine($"RankCommandMessage: \"{EscapeMessage(config.RankCommandMessage)}\"");   
+            stringBuilder.AppendLine($"RankCommandMessage : \"{EscapeMessage(config.RankCommandMessage)}\"");   
             stringBuilder.AppendLine($"TimeFormat: \"{EscapeMessage(config.TimeFormat)}\"");  
-            stringBuilder.AppendLine("# Enabling or disabling the !rank command");
-            stringBuilder.AppendLine($"IsRankCommandEnabled: {config.IsRankCommandEnabled.ToString().ToLower()}");  
-            
+            stringBuilder.AppendLine("# Enable or disable the !rank command");
+            stringBuilder.AppendLine($"IsRankCommandEnabled: {config.IsRankCommandEnabled.ToString().ToLower()}");
+
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("# !top");
             stringBuilder.AppendLine($"TopCommandIntroMessage : \"{EscapeMessage(config.TopCommandIntroMessage)}\"");   
             stringBuilder.AppendLine($"TopCommandPlayerMessage: \"{EscapeMessage(config.TopCommandPlayerMessage)}\"");       
             stringBuilder.AppendLine($"TopCommandNoDataMessage: \"{EscapeMessage(config.TopCommandNoDataMessage)}\"");     
             stringBuilder.AppendLine($"TopCommandErrorMessage: \"{EscapeMessage(config.TopCommandErrorMessage)}\"");     
-            stringBuilder.AppendLine("# Enabling or disabling the !top command");
+            stringBuilder.AppendLine("# Enable or disable the !top command");
             stringBuilder.AppendLine($"IsTopCommandEnabled: {config.IsTopCommandEnabled.ToString().ToLower()}");
 
             stringBuilder.AppendLine();
@@ -280,7 +282,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"TopKillsCommandPlayerMessage: \"{EscapeMessage(config.TopKillsCommandPlayerMessage)}\"");
             stringBuilder.AppendLine($"TopKillsCommandNoDataMessage: \"{EscapeMessage(config.TopKillsCommandNoDataMessage)}\"");
             stringBuilder.AppendLine($"TopKillsCommandErrorMessage: \"{EscapeMessage(config.TopKillsCommandErrorMessage)}\"");
-            stringBuilder.AppendLine("# Enabling or disabling the !topkills command");
+            stringBuilder.AppendLine("# Enable or disable the !topkills command");
             stringBuilder.AppendLine($"IsTopkillsCommandEnabled: {config.IsTopkillsCommandEnabled.ToString().ToLower()}");            
 
             stringBuilder.AppendLine();
@@ -289,7 +291,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"TopDeathsCommandPlayerMessage: \"{EscapeMessage(config.TopDeathsCommandPlayerMessage)}\"");
             stringBuilder.AppendLine($"TopDeathsCommandNoDataMessage: \"{EscapeMessage(config.TopDeathsCommandNoDataMessage)}\"");
             stringBuilder.AppendLine($"TopDeathsCommandErrorMessage: \"{EscapeMessage(config.TopDeathsCommandErrorMessage)}\"");
-            stringBuilder.AppendLine("# Enabling or disabling the !topdeaths command");
+            stringBuilder.AppendLine("# Enable or disable the !topdeaths command");
             stringBuilder.AppendLine($"IsTopdeathsCommandEnabled: {config.IsTopdeathsCommandEnabled.ToString().ToLower()}");            
 
             stringBuilder.AppendLine();
@@ -298,7 +300,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"TopKDRCommandPlayerMessage: \"{EscapeMessage(config.TopKDRCommandPlayerMessage)}\"");
             stringBuilder.AppendLine($"TopKDRCommandNoDataMessage: \"{EscapeMessage(config.TopKDRCommandNoDataMessage)}\"");
             stringBuilder.AppendLine($"TopKDRCommandErrorMessage: \"{EscapeMessage(config.TopKDRCommandErrorMessage)}\""); 
-            stringBuilder.AppendLine("# Enabling or disabling the !topkdr command");
+            stringBuilder.AppendLine("# Enable or disable the !topkdr command");
             stringBuilder.AppendLine($"IsTopkdrCommandEnabled: {config.IsTopkdrCommandEnabled.ToString().ToLower()}");             
 
             stringBuilder.AppendLine();
@@ -308,7 +310,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"TopTimeCommandNoDataMessage : \"{EscapeMessage(config.TopTimeCommandNoDataMessage)}\"");
             stringBuilder.AppendLine($"TopTimeCommandErrorMessage: \"{EscapeMessage(config.TopTimeCommandErrorMessage)}\"");   
             stringBuilder.AppendLine($"TopTimeFormat: \"{EscapeMessage(config.TopTimeFormat)}\"");   
-            stringBuilder.AppendLine("# Enabling or disabling the !toptime command");
+            stringBuilder.AppendLine("# Enable or disable the !toptime command");
             stringBuilder.AppendLine($"IsToptimeCommandEnabled: {config.IsToptimeCommandEnabled.ToString().ToLower()}");            
             
             stringBuilder.AppendLine();
@@ -316,7 +318,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"ResetStatsCooldownMessage: \"{EscapeMessage(config.ResetStatsCooldownMessage)}\"");
             stringBuilder.AppendLine($"ResetStatsSuccessMessage: \"{EscapeMessage(config.ResetStatsSuccessMessage)}\""); 
             stringBuilder.AppendLine($"ResetStatsCooldownHours: \"{EscapeMessage(config.ResetStatsCooldownHours.ToString())}\"");   
-            stringBuilder.AppendLine("# Enabling or disabling the !resetstats command");
+            stringBuilder.AppendLine("# Enable or disable the !resetstats command");
             stringBuilder.AppendLine($"IsResetstatsCommandEnabled: {config.IsResetstatsCommandEnabled.ToString().ToLower()}");              
 
             stringBuilder.AppendLine();
@@ -325,7 +327,7 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"RanksCommandRankMessage: \"{EscapeMessage(config.RanksCommandRankMessage)}\""); 
             stringBuilder.AppendLine($"RanksCommandNoDataMessage: \"{EscapeMessage(config.RanksCommandNoDataMessage)}\"");   
             stringBuilder.AppendLine($"RanksCommandErrorMessage: \"{EscapeMessage(config.RanksCommandErrorMessage)}\"");     
-            stringBuilder.AppendLine("# Enabling or disabling the !ranks command");
+            stringBuilder.AppendLine("# Enable or disable the !ranks command");
             stringBuilder.AppendLine($"IsRanksCommandEnabled: {config.IsRanksCommandEnabled.ToString().ToLower()}");                
 
             stringBuilder.AppendLine();
@@ -340,14 +342,14 @@ namespace RanksPointsNamespace
             stringBuilder.AppendLine($"ResetStatsCommandDescription: \"{EscapeMessage(config.ResetStatsCommandDescription)}\"");   
             stringBuilder.AppendLine($"RanksCommandDescription: \"{EscapeMessage(config.RanksCommandDescription)}\"");    
             stringBuilder.AppendLine($"TagRankCommandDescription: \"{EscapeMessage(config.TagRankCommandDescription)}\"");               
-            stringBuilder.AppendLine("# Enabling or disabling the !lvl command");
+            stringBuilder.AppendLine("# Enable or disable the !lvl command");
             stringBuilder.AppendLine($"IsLvlCommandEnabled: {config.IsLvlCommandEnabled.ToString().ToLower()}");                                                                                  
             
             stringBuilder.AppendLine();   
             stringBuilder.AppendLine("# !tagrank");
             stringBuilder.AppendLine($"TagRankEnabledMessage: \"{EscapeMessage(config.TagRankEnabledMessage)}\"");
             stringBuilder.AppendLine($"TagRankDisabledMessage: \"{EscapeMessage(config.TagRankDisabledMessage)}\"");
-            stringBuilder.AppendLine("# Enabling or disabling the !tagrank command");
+            stringBuilder.AppendLine("# Enable or disable the !tagrank command");
             stringBuilder.AppendLine($"IsTagRankCommandEnabled: {config.IsTagRankCommandEnabled.ToString().ToLower()}");
 
             File.WriteAllText(filePath, stringBuilder.ToString());
@@ -382,21 +384,21 @@ namespace RanksPointsNamespace
                     new RankConfig { Id = 2, Name = "Silver - III", MinExperience = 25, ClanTag = "[Silver - III]" },
                     new RankConfig { Id = 3, Name = "Silver - IV", MinExperience = 50, ClanTag = "[Silver - IV]" },
                     new RankConfig { Id = 4, Name = "Silver Elite", MinExperience = 75, ClanTag = "[Silver Elite]" },
-                    new RankConfig { Id = 5, Name = "Silver - Master Guardian", MinExperience = 100, ClanTag = "[Silver - MG]" },
+                    new RankConfig { Id = 5, Name = "Silver - Grand Master", MinExperience = 100, ClanTag = "[Silver - GM]" },
                     new RankConfig { Id = 6, Name = "Gold Star - I", MinExperience = 150, ClanTag = "[Gold Star - I]" },
                     new RankConfig { Id = 7, Name = "Gold Star - II", MinExperience = 200, ClanTag = "[Gold Star - II]" },
                     new RankConfig { Id = 8, Name = "Gold Star - III", MinExperience = 300, ClanTag = "[Gold Star - III]" },
                     new RankConfig { Id = 9, Name = "Gold Star - Master", MinExperience = 500, ClanTag = "[Gold Star - M]" },
                     new RankConfig { Id = 10, Name = "Master Guardian - I", MinExperience = 750, ClanTag = "[Master Guardian - I]" },
                     new RankConfig { Id = 11, Name = "Master Guardian - II", MinExperience = 1000, ClanTag = "[Master Guardian - II]" },
-                    new RankConfig { Id = 12, Name = "Master Guardian Elite", MinExperience = 1500, ClanTag = "[Master Guardian Elite]" },
+                    new RankConfig { Id = 12, Name = "Master Guardian - Elite", MinExperience = 1500, ClanTag = "[Master Guardian - E]" },
                     new RankConfig { Id = 13, Name = "Distinguished Master Guardian", MinExperience = 2000, ClanTag = "[Distinguished MG]" },
                     new RankConfig { Id = 14, Name = "Legendary Eagle", MinExperience = 3000, ClanTag = "[Legendary Eagle]" },
-                    new RankConfig { Id = 15, Name = "Legendary Eagle Master", MinExperience = 5000, ClanTag = "[Legendary Eagle M]" },
-                    new RankConfig { Id = 16, Name = "Supreme Master First Class", MinExperience = 7500, ClanTag = "[Supreme MFC]" },
+                    new RankConfig { Id = 15, Name = "Legendary Eagle - Master", MinExperience = 5000, ClanTag = "[Leg. Eagle - M]" },
+                    new RankConfig { Id = 16, Name = "Supreme Master First Class", MinExperience = 7500, ClanTag = "[Supreme Master FC]" },
                     new RankConfig { Id = 17, Name = "Global Elite", MinExperience = 10000, ClanTag = "[Global Elite]" }
                 };
-
+                
                 var serializer = new SerializerBuilder()
                     .WithNamingConvention(CamelCaseNamingConvention.Instance)
                     .Build();
@@ -438,7 +440,7 @@ namespace RanksPointsNamespace
 
             try
             {
-                var rank = GetCurrentRank(steamID64); 
+                var rank = GetCurrentRank(steamID64);
 
                 if (rank != null && !string.IsNullOrEmpty(rank.ClanTag))
                 {
@@ -446,12 +448,12 @@ namespace RanksPointsNamespace
                 }
                 else
                 {
-                    Console.WriteLine("[SetPlayerClanTag] Failed to set clan tag: player or rank is missing.");
+                    Console.WriteLine("[SetPlayerClanTag] Unable to set clan tag: player or rank is missing.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SetPlayerClanTag] Error while retrieving rank: {ex.Message}");
+                Console.WriteLine($"[SetPlayerClanTag] Error getting rank: {ex.Message}");
             }
         }
 
@@ -669,27 +671,18 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
-
-        private async Task UpdatePlayerConnectionAsync(string steamId, string playerName, long currentTime)
-        {
-            try
-            {
-                using (var connection = new MySqlConnection(ConnectionString))
-                {
-                    await connection.OpenAsync();
-                    var insertQuery = $"INSERT INTO {dbConfig.Name} (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect;";
-                    await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in UpdatePlayerConnectionAsync: {ex.Message}");
-            }
-        }
-
+        Dictionary<uint, PlayerIteam> g_Player = new Dictionary<uint, PlayerIteam>();
         private void OnClientConnected(int playerSlot)
         {
             var player = Utilities.GetPlayerFromSlot(playerSlot);
+            var client = player.Index;
+            g_Player[client] = new PlayerIteam
+            {
+                ClanTag = null,
+                value = 0,
+                valuechange = 0,
+                rank = 0
+            };
             if (player != null && !player.IsBot)
             {
                 var steamId64 = player.SteamID.ToString();
@@ -697,12 +690,73 @@ namespace RanksPointsNamespace
                 var playerName = GetPlayerNickname(steamId64);
                 var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                var updateTask = UpdatePlayerConnectionAsync(steamId, playerName, currentTime);
+                var getdateTask = GetPlayerConnectionAsync(steamId, playerName, currentTime, client, player);
 
                 activePlayers.Add(steamId);  
-                SetPlayerClanTag(player);
+
             }
         }
+        private async Task GetPlayerConnectionAsync(string steamId, string playerName, long currentTime, uint client, CCSPlayerController player)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var insertQuery = $"INSERT INTO `{dbConfig.Name}` (steam, name, lastconnect) VALUES (@SteamID, @Name, @LastConnect) ON DUPLICATE KEY UPDATE lastconnect = @LastConnect, name = @Name;";
+                    await connection.ExecuteAsync(insertQuery, new { SteamID = steamId, Name = playerName, LastConnect = currentTime });
+                    string query = $"SELECT * FROM `{dbConfig.Name}` WHERE steam = '{steamId}'";
+                    
+                    var playerdata = await connection.QueryFirstOrDefaultAsync(query);
+                    
+                    Server.NextFrame(() => 
+                    {
+                        if (playerdata != null)
+                        {
+                            g_Player[client].value = playerdata.value;
+                            g_Player[client].rank = playerdata.rank;
+
+                            var ranksConfig = LoadRanksConfig();
+                            RankConfig? defaultRank = ranksConfig.FirstOrDefault(r => r.Id == 0);
+                            RankConfig? currentRank = ranksConfig.FirstOrDefault(r => r.Id == g_Player[client].rank);
+                            var rank = currentRank ?? defaultRank;
+
+                            if (rank != null && !string.IsNullOrEmpty(rank.ClanTag))
+                            {
+                                g_Player[client].ClanTag = rank.ClanTag;
+                                player.Clan = rank.ClanTag;
+                            }
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetPlayerConnectionAsync: {ex.Message}");
+                Server.NextFrame(() => Console.WriteLine($"Error processing player data in main thread: {ex.Message}"));
+            }
+        }
+        public class PlayerIteam
+        {
+
+            public string? ClanTag { get; set; }
+            public int? value { get; set; }
+            public int? valuechange { get; set; }
+            public int? rank { get; set; }
+
+            public PlayerIteam()
+            {
+                Init();
+            }
+
+            public void Init()
+            {
+                ClanTag = null;
+                value = 0;
+                valuechange = 0;    
+                rank = 0;
+            }
+        }        
         private HookResult OnRoundStart(EventRoundStart roundStartEvent, GameEventInfo info)
         {
             if (isWarmup)
@@ -724,6 +778,7 @@ namespace RanksPointsNamespace
 
             return HookResult.Continue;
         }
+        
         private HookResult OnMatchStart(EventRoundAnnounceMatchStart matchStartEvent, GameEventInfo info)
         {
             isWarmup = false;
@@ -813,7 +868,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET shoots = shoots + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET shoots = shoots + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -830,7 +885,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET hits = hits + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET hits = hits + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -870,14 +925,14 @@ namespace RanksPointsNamespace
                 {
                     await connection.OpenAsync();
 
-                    var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM {dbConfig.Name} WHERE steam = @SteamID", new { SteamID = steamId });
-
+                    var playerData = await connection.QueryFirstOrDefaultAsync($"SELECT lastconnect, playtime FROM `{dbConfig.Name}` WHERE steam = @SteamID", new { SteamID = steamId });
+                    
                     if (playerData != null)
                     {
                         var sessionTime = currentTime - playerData.lastconnect;
                         var newPlaytime = playerData.playtime + sessionTime;
 
-                        var updateQuery = $"UPDATE {dbConfig.Name} SET playtime = @Playtime WHERE steam = @SteamID;";
+                        var updateQuery = $"UPDATE `{dbConfig.Name}` SET playtime = @Playtime WHERE steam = @SteamID;";
                         await connection.ExecuteAsync(updateQuery, new { SteamID = steamId, Playtime = newPlaytime });
                     }
                 }
@@ -1122,7 +1177,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET headshots = headshots + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET headshots = headshots + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1139,7 +1194,7 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET assists = assists + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET assists = assists + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1156,7 +1211,7 @@ namespace RanksPointsNamespace
                 {
                     await connection.OpenAsync();
                     string columnToUpdate = isKill ? "kills" : "deaths";
-                    var updateQuery = $"UPDATE {dbConfig.Name} SET {columnToUpdate} = {columnToUpdate} + 1 WHERE steam = @SteamID;";
+                    var updateQuery = $"UPDATE `{dbConfig.Name}` SET `{columnToUpdate}` = `{columnToUpdate}` + 1 WHERE steam = @SteamID;";
                     await connection.ExecuteAsync(updateQuery, new { SteamID = steamId });
                 }
             }
@@ -1165,9 +1220,11 @@ namespace RanksPointsNamespace
                 Console.WriteLine($"Error in UpdateKillsOrDeathsAsync: {ex.Message}");
             }                
         }
-        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points)
+        private async Task<int> UpdatePlayerPointsAsync(string steamId, int points, uint client)
         {
             int updatedPoints = 0;
+            updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) points = 0;
 
             try
             {
@@ -1176,14 +1233,9 @@ namespace RanksPointsNamespace
                     await connection.OpenAsync();
                     using (var transaction = await connection.BeginTransactionAsync())
                     {
-                        var currentPointsQuery = $"SELECT value FROM {dbConfig.Name} WHERE steam = @SteamID FOR UPDATE;";
-                        var currentPoints = await connection.ExecuteScalarAsync<int>(currentPointsQuery, new { SteamID = steamId }, transaction);
+                        var updateQuery = $"UPDATE `{dbConfig.Name}` SET value = value + @NewPoints WHERE steam = @SteamID;";
 
-                        updatedPoints = currentPoints + points;
-                        if (updatedPoints < 0) updatedPoints = 0;
-
-                        var updateQuery = $"UPDATE {dbConfig.Name} SET value = @NewPoints WHERE steam = @SteamID;";
-                        await connection.ExecuteAsync(updateQuery, new { NewPoints = updatedPoints, SteamID = steamId }, transaction);
+                        await connection.ExecuteAsync(updateQuery, new { NewPoints = points, SteamID = steamId }, transaction);
 
                         await transaction.CommitAsync();
                     }
@@ -1198,6 +1250,8 @@ namespace RanksPointsNamespace
         }
         private int AddOrRemovePoints(string steamId, int points, CCSPlayerController playerController, string reason, string messageColor)
         {
+            var client = playerController.Index;
+
             if (string.IsNullOrEmpty(steamId))
             {
                 return 0;
@@ -1213,8 +1267,12 @@ namespace RanksPointsNamespace
                     }
                 }
             }
+            
+            int updatedPoints = (int)(g_Player[client].value + points);
+            if (updatedPoints < 0) updatedPoints = 0;
+            _ = UpdatePlayerPointsAsync(steamId, points, client);
+            g_Player[playerController.Index].value = updatedPoints;
 
-            int updatedPoints = UpdatePlayerPointsAsync(steamId, points).GetAwaiter().GetResult();
 
             Action chatUpdateAction = () =>
             {
@@ -1254,6 +1312,7 @@ namespace RanksPointsNamespace
         private async Task<bool> CheckAndUpdateRankAsync(string steamId, int updatedPoints)
         {
             var ranksConfig = LoadRanksConfig();
+
             var newRankIndex = -1;
 
             for (int i = 0; i < ranksConfig.Count; i++)
@@ -1267,40 +1326,63 @@ namespace RanksPointsNamespace
                     break;
                 }
             }
-
+    
             if (newRankIndex != -1)
             {
                 var newRank = ranksConfig[newRankIndex];
-                
-                int currentRankId = await GetCurrentRankId(steamId);
 
+                int currentRankId = await GetCurrentRankId(steamId);
                 if (currentRankId != newRank.Id)
                 {
                     bool isRankUpdated = await UpdatePlayerRankAsync(steamId, newRank.Id);
-
+            
                     if (isRankUpdated)
                     {
                         bool isRankUp = newRank.Id > currentRankId;
-
                         NotifyPlayerOfRankChange(steamId, newRank.Name, isRankUp);
+                        
+                        string steamId64 = ConvertSteamIDToSteamID64(steamId);
+                        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+                        {
+                            if (player != null && player.IsValid && !player.IsBot && player.SteamID.ToString() == steamId64)
+                            {
+                                Server.NextFrame(() =>
+                                {
+                                    player.Clan = $"[{Regex.Replace(newRank.Name, @"\{[A-Za-z]+}", "")}]";
+                                    Utilities.SetStateChanged(player, "CCSPlayerController", "m_szClan");
+                                });
+                            }
+                        }
 
+                        
                         return true;
                     }
+
+
                 }
             }
 
             return false;
         }
-
         private async Task<int> GetCurrentRankId(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                await connection.OpenAsync();
-                var currentRankQuery = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamID;";
-                return await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var currentRankQuery = $"SELECT `rank` FROM `{dbConfig.Name}` WHERE `steam` = @SteamID;";
+                    var rankId = await connection.ExecuteScalarAsync<int>(currentRankQuery, new { SteamID = steamId });
+                    return rankId;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GetCurrentRankId] Error fetching rank for {steamId}: {ex.Message}");
+                return -1; 
             }
         }
+
 
         private async Task<bool> UpdatePlayerRankAsync(string steamId, int newRankId)
         {
@@ -1309,9 +1391,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
-                    var updateRankQuery = $"UPDATE {dbConfig.Name} SET rank = @NewRankId WHERE steam = @SteamID;";
-                    await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRankId, SteamID = steamId });
-                    return true;
+                    var updateRankQuery = $"UPDATE `{dbConfig.Name}` SET `rank` = @NewRankId WHERE `steam` = @SteamID;";
+                    var affectedRows = await connection.ExecuteAsync(updateRankQuery, new { NewRankId = newRankId, SteamID = steamId });
+                    return affectedRows > 0; 
                 }
             }
             catch (Exception ex)
@@ -1320,7 +1402,6 @@ namespace RanksPointsNamespace
                 return false;
             }
         }
-
         private List<WeaponPoints> LoadWeaponPointsConfig()
         {
             var filePath = Path.Combine(ModuleDirectory, "Weapons.yml");
@@ -1358,7 +1439,7 @@ namespace RanksPointsNamespace
             {
                 string steamId64 = ConvertSteamIDToSteamID64(steamId);
                 string message = isRankUp ? config.RankUpMessage.Replace("{RANK_NAME}", newRankName) 
-                                        : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
+                    : config.RankDownMessage.Replace("{RANK_NAME}", newRankName);
 
                 foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
                 {
@@ -1433,7 +1514,17 @@ namespace RanksPointsNamespace
             }
             return null;
         }
-
+        private CCSPlayerController FindPlayerByUserId(int userId)
+        {
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            {
+                if (player != null && player.IsValid && !player.IsBot && player.UserId == userId)
+                {
+                    return player;
+                }
+            }
+            return null;
+        }
 
         private void CreateDbConfigIfNotExists()
         {
@@ -1480,9 +1571,9 @@ namespace RanksPointsNamespace
                 await connection.OpenAsync();
                 var playerData = await connection.QueryFirstOrDefaultAsync($@"
                     SELECT p.rank, p.value as points, p.kills, p.deaths, p.playtime,
-                        (SELECT COUNT(*) FROM {dbConfig.Name} WHERE value > p.value) + 1 as place,
-                        (SELECT COUNT(*) FROM {dbConfig.Name}) as totalPlayers
-                    FROM {dbConfig.Name} p
+                        (SELECT COUNT(*) FROM `{dbConfig.Name}` WHERE value > p.value) + 1 as place,
+                        (SELECT COUNT(*) FROM `{dbConfig.Name}`) as totalPlayers
+                    FROM `{dbConfig.Name}` p
                     WHERE p.steam = @SteamID;", new { SteamID = steamId });
 
                 if (playerData == null)
@@ -1538,7 +1629,7 @@ namespace RanksPointsNamespace
             return string.Format(config.TimeFormat, timePlayed.Days, timePlayed.Hours, timePlayed.Minutes);
         }
 
-        [ConsoleCommand("rank", "Displays your current rank and statistics")]
+        [ConsoleCommand("rank", "Shows your current rank and statistics")]
         public void OnRankCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsRankCommandEnabled)
@@ -1566,7 +1657,7 @@ namespace RanksPointsNamespace
             message = ReplaceColorPlaceholders(message);
             player.PrintToChat(message);
         }
-        [ConsoleCommand("top", "Shows the top-10 players by points")]
+        [ConsoleCommand("top", "Shows top 10 players by points")]
         public void OnTopCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsTopCommandEnabled)
@@ -1576,7 +1667,7 @@ namespace RanksPointsNamespace
 
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
 
@@ -1585,12 +1676,12 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
-                        SELECT steam, name, value, rank
-                        FROM {dbConfig.Name}
+                    var topPlayersQuery = @"
+                        SELECT steam, name, value, `rank`
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY value DESC
                         LIMIT 10;";
-
+                    
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
                     if (topPlayers.Any())
@@ -1627,8 +1718,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(errorMessage);
             }
         }
-
-        [ConsoleCommand("topkills", "Shows the top-10 players by kills")]
+        [ConsoleCommand("topkills", "Shows top 10 players by kills")]
         public void OnTopKillsCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsTopkillsCommandEnabled)
@@ -1638,7 +1728,7 @@ namespace RanksPointsNamespace
 
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
 
@@ -1647,11 +1737,12 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
+                    var topPlayersQuery = @"
                         SELECT steam, name, kills
-                        FROM {dbConfig.Name}
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY kills DESC
                         LIMIT 10;";
+
 
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
@@ -1682,7 +1773,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopKillsCommandErrorMessage));
             }
         }
-        [ConsoleCommand("topdeaths", "Shows the top-10 players by deaths")]
+        [ConsoleCommand("topdeaths", "Shows top 10 players by deaths")]
         public void OnTopDeathsCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsTopdeathsCommandEnabled)
@@ -1691,9 +1782,10 @@ namespace RanksPointsNamespace
             }           
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
+
             try
             {
                 using (var connection = new MySqlConnection(ConnectionString))
@@ -1701,7 +1793,7 @@ namespace RanksPointsNamespace
                     connection.Open();
                     var topPlayersQuery = $@"
                         SELECT steam, name, deaths
-                        FROM {dbConfig.Name}
+                        FROM `{dbConfig.Name}`
                         ORDER BY deaths DESC
                         LIMIT 10;";
 
@@ -1734,7 +1826,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopDeathsCommandErrorMessage));
             }
         }
-        [ConsoleCommand("topkdr", "Shows the top-10 players by KDR (Kill Death Ratio)")]
+        [ConsoleCommand("topkdr", "Shows top 10 players by KDR")]
         public void OnTopKDRCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsTopkdrCommandEnabled)
@@ -1743,7 +1835,7 @@ namespace RanksPointsNamespace
             }           
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
 
@@ -1753,11 +1845,15 @@ namespace RanksPointsNamespace
                 {
                     connection.Open();
                     var topPlayersQuery = $@"
-                        SELECT steam, name, kills, deaths, IF(deaths = 0, kills, kills/deaths) AS kdr
-                        FROM {dbConfig.Name}
+                        SELECT steam, name, kills, deaths, 
+                        CASE
+                            WHEN deaths = 0 THEN kills
+                            ELSE kills / deaths
+                        END AS kdr
+                        FROM `{dbConfig.Name}`
                         ORDER BY kdr DESC, kills DESC
                         LIMIT 10;";
-
+                    
                     var topPlayers = connection.Query(topPlayersQuery).ToList();
 
                     if (topPlayers.Any())
@@ -1787,7 +1883,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopKDRCommandErrorMessage));
             }
         }
-        [ConsoleCommand("toptime", "Shows the top-10 players by server time")]
+        [ConsoleCommand("toptime", "Shows top 10 players by server time")]
         public void OnTopTimeCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsToptimeCommandEnabled)
@@ -1796,7 +1892,7 @@ namespace RanksPointsNamespace
             }              
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
 
@@ -1805,9 +1901,9 @@ namespace RanksPointsNamespace
                 using (var connection = new MySqlConnection(ConnectionString))
                 {
                     connection.Open();
-                    var topPlayersQuery = $@"
+                    var topPlayersQuery = @"
                         SELECT steam, name, playtime
-                        FROM {dbConfig.Name}
+                        FROM `" + dbConfig.Name + @"`
                         ORDER BY playtime DESC
                         LIMIT 10;";
 
@@ -1843,6 +1939,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(ReplaceColorPlaceholders(config.TopTimeCommandErrorMessage));
             }
         }
+
         [ConsoleCommand("resetstats", "Reset your statistics (can be used once every 3 hours)")]
         public void OnResetStatsCommand(CCSPlayerController? player, CommandInfo command)
         {
@@ -1874,14 +1971,21 @@ namespace RanksPointsNamespace
 
         private void ResetPlayerStats(string steamId)
         {
-            using (var connection = new MySqlConnection(ConnectionString))
+            try
             {
-                connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, value = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
-                connection.Execute(resetQuery, new { SteamID = steamId });
+                using (var connection = new MySqlConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var resetQuery = $"UPDATE `{dbConfig.Name}` SET kills = 0, deaths = 0, `value` = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0, playtime = 0 WHERE steam = @SteamID;";
+                    int affectedRows = connection.Execute(resetQuery, new { SteamID = steamId });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating player stats: {ex.Message}");
             }
         }
-        [ConsoleCommand("rp_reloadconfig", "Reloads the Config.yml configuration file")]
+        [ConsoleCommand("rp_reloadconfig", "Reloads the configuration file Config.yml")]
         public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
@@ -1889,12 +1993,11 @@ namespace RanksPointsNamespace
                 try
                 {
                     config = LoadOrCreateConfig();
-
-                    Console.WriteLine("[RankPointsPlugin] Configuration successfully reloaded.");
+                    Console.WriteLine("[RankPointsPlugin] Configuration reloaded successfully.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RankPointsPlugin] Error while reloading configuration: {ex.Message}");
+                    Console.WriteLine($"[RankPointsPlugin] Error reloading configuration: {ex.Message}");
                 }
             }
             else
@@ -1902,7 +2005,8 @@ namespace RanksPointsNamespace
                 player.PrintToChat("This command is only available from the server console.");
             }
         }
-        [ConsoleCommand("rp_reloadweapons", "Reloads the Weapons.yml configuration file")]
+
+        [ConsoleCommand("rp_reloadweapons", "Reloads the configuration file Weapons.yml")]
         public void ReloadWeaponsConfigCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null || player.IsBot) 
@@ -1910,11 +2014,11 @@ namespace RanksPointsNamespace
                 try
                 {
                     weaponPointsConfig = LoadWeaponPointsConfig();
-                    Console.WriteLine("[RankPointsPlugin] Weapon configuration successfully reloaded.");
+                    Console.WriteLine("[RankPointsPlugin] Weapon configuration reloaded successfully.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RankPointsPlugin] Error while reloading weapon configuration: {ex.Message}");
+                    Console.WriteLine($"[RankPointsPlugin] Error reloading weapon configuration: {ex.Message}");
                 }
             }
             else
@@ -1922,8 +2026,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat($"{ChatColors.Red}This command is only available from the server console.");
             }
         }
-
-        [ConsoleCommand("rp_reloadranks", "Reloads the settings_ranks.yaml configuration file")]
+        [ConsoleCommand("rp_reloadranks", "Reloads the configuration file settings_ranks.yaml")]
         public void ReloadRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null)
@@ -1931,12 +2034,11 @@ namespace RanksPointsNamespace
                 try
                 {
                     LoadRanksConfig();
-
-                    Console.WriteLine("[RankPointsPlugin] Ranks configuration successfully reloaded.");
+                    Console.WriteLine("[RankPointsPlugin] Ranks configuration reloaded successfully.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RankPointsPlugin] Error while reloading ranks configuration: {ex.Message}");
+                    Console.WriteLine($"[RankPointsPlugin] Error reloading ranks configuration: {ex.Message}");
                 }
             }
             else
@@ -1944,7 +2046,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat("{Red}This command is only available from the server console.");
             }
         }
-        [ConsoleCommand("ranks", "Shows a list of all ranks and the experience needed to achieve them")]
+        [ConsoleCommand("ranks", "Shows the list of all ranks and the experience required to achieve them")]
         public void OnRanksCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsRanksCommandEnabled)
@@ -1953,10 +2055,10 @@ namespace RanksPointsNamespace
             }             
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
-
+            
             try
             {
                 var ranksConfig = LoadRanksConfig();
@@ -1988,7 +2090,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(errorMessage);
             }
         }
-        [ConsoleCommand("lvl", "Displays a list of all available commands and their functions")]
+        [ConsoleCommand("lvl", "Shows the list of all available commands and their functions")]
         public void OnLvlCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsLvlCommandEnabled)
@@ -1997,7 +2099,7 @@ namespace RanksPointsNamespace
             }               
             if (player == null)
             {
-                Console.WriteLine("This command can only be used by a player.");
+                Console.WriteLine("This command can only be used by players.");
                 return;
             }
 
@@ -2022,7 +2124,7 @@ namespace RanksPointsNamespace
                 player.PrintToChat(description);
             }
         }
-        [ConsoleCommand("tagrank", "Toggles the display of your clan tag on or off.")]
+        [ConsoleCommand("tagrank", "Enables or disables displaying your clan tag.")]
         public void OnTagRankCommand(CCSPlayerController? player, CommandInfo command)
         {
             if (!config.IsTagRankCommandEnabled)
@@ -2072,15 +2174,15 @@ namespace RanksPointsNamespace
                     {
                         case "exp":
                             ResetPlayerExperience(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Experience and rank of player {steamId} (SteamID64: {steamId64}) have been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Experience and rank for player {steamId} (SteamID64: {steamId64}) have been reset.");
                             break;
                         case "stats":
                             ResetPlayerStats(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Statistics of player {steamId} (SteamID64: {steamId64}) have been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Player statistics for {steamId} (SteamID64: {steamId64}) have been reset.");
                             break;
                         case "time":
                             ResetPlayerPlaytime(steamId);
-                            Console.WriteLine($"[RankPointsPlugin] Playtime of player {steamId} (SteamID64: {steamId64}) has been reset.");
+                            Console.WriteLine($"[RankPointsPlugin] Player playtime for {steamId} (SteamID64: {steamId64}) has been reset.");
                             break;
                         default:
                             Console.WriteLine("Invalid data type. Use 'exp', 'stats', or 'time'.");
@@ -2102,7 +2204,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET value = 0, rank = 1 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET `value` = 0, `rank` = 1 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
@@ -2112,7 +2214,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET kills = 0, deaths = 0, shoots = 0, hits = 0, headshots = 0, assists = 0, round_win = 0, round_lose = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
@@ -2122,7 +2224,7 @@ namespace RanksPointsNamespace
             using (var connection = new MySqlConnection(ConnectionString))
             {
                 connection.Open();
-                var resetQuery = $"UPDATE {dbConfig.Name} SET playtime = 0 WHERE steam = @SteamID;";
+                var resetQuery = $"UPDATE `{dbConfig.Name}` SET playtime = 0 WHERE steam = @SteamID;";
                 connection.Execute(resetQuery, new { SteamID = steamId });
             }
         }
