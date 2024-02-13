@@ -335,11 +335,6 @@ Additional weapon types can also be added, for example, 'weapon_knife' correspon
 - `rp_reloadweapons` reloads the configuration file Weapons.yaml.
 - `rp_resetranks` Clears a player's statistics. Usage: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` clears values, rank; `stats` clears kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` clears playtime).
 
-# Planned Features
-- Expand the list of events for which experience is awarded.
-- Fix all warnings during compilation.
-- This list will be further expanded.
-
 # RU
 **Для удобства и лучшей организации помощи я создал специальный сервер в Discord. Вы можете присоединиться к нему по следующей ссылке: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
 
@@ -652,8 +647,3 @@ IsTagRankCommandEnabled: true
 - `rp_reloadranks` перезагружает конфигурационный файл settings_ranks.yaml
 - `rp_reloadweapons` перезагружает конфигурационный файл Weapons.yaml 
 - `rp_resetranks` очищает статистику игрока. Использование: rp_resetranks <steamid64> <data-type> (`data-type`: `exp` очистка values, rank; `stats` очистка kills, deaths, shoots, hits, headshots, assists, round_win, round_lose; `time` очистка playtime)
-
-# Планируется
-- Расширить список событий, за которые начисляется опыт.
-- Исправить все предупреждения при компиляции.
-- Данный список будет ещё дополнен.
